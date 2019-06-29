@@ -2,13 +2,13 @@ from node_parser import NodeTypes
 
 
 class Generator:
-    def __init__(self, node, c_code):
-        self.__node = node
+    def __init__(self, nodes, c_code):
+        self.__nodes = nodes
         self.__c_code = c_code
 
     def generate(self):
         gen1 = self.__gen_pre()
-        gen2 = self.__gen_from_node(self.__node)
+        gen2 = self.__gen_from_node(self.__nodes)
         gen3 = self.__gen_suf()
         return gen1 + gen2 + gen3
 
@@ -25,9 +25,10 @@ class Generator:
         result.append('  ret')
         return result
 
-    def __gen_from_node(self, node):
+    def __gen_from_node(self, nodes):
         result = []
-        self.__gen_from_node_inner(node, result)
+        for x in nodes:
+            self.__gen_from_node_inner(x, result)
         return result
 
     def __gen_from_node_inner(self, node, output):

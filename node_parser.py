@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from string import ascii_lowercase
 
 
 class NodeTypes(Enum):
@@ -13,6 +14,8 @@ class NodeTypes(Enum):
     GE = auto()
     LT = auto()
     LE = auto()
+    ASSIGN = auto()
+    LVAR = auto()
 
 
 class Node:
@@ -21,17 +24,21 @@ class Node:
         self.left = None
         self.right = None
         self.value = None
+        self.offset = None
 
 
 class Parser:
     '''
-    expr       = equality
+    program    = stmt*
+    stmt       = expr ";"
+    expr       = assign
+    assign     = equality ("=" assign)?
     equality   = relational ("==" relational | "!=" relational)*
     relational = add ("<" add | "<=" add | ">" add | ">=" add)*
     add        = mul ("+" mul | "-" mul)*
     mul        = unary ("*" unary | "/" unary)*
     unary      = ("+" | "-")? term
-    term       = num | "(" expr ")"
+    term       = num | ident | "(" expr ")"
     '''
 
     def __init__(self, tokens):
@@ -50,14 +57,45 @@ class Parser:
         node.value = value
         return node
 
+    def __create_ident_node(self, name):
+        node = Node()
+        node.type = NodeTypes.LVAR
+        node.offset = (ascii_lowercase.find(name) + 1) * 8
+
     def parse(self):
-        return self.__expr(self.__tokens)
+        return self.__program(self.__tokens)
+
+    def __program(self, tokens):
+        '''
+        program = stmt*
+        '''
+        nodes = []
+        while not tokens.is_empty():
+            nodes.append(self.__stmt(tokens))
+        return nodes
+
+    def __stmt(self, tokens):
+        '''
+        stmt = expr ";"
+        '''
+        node = self.__expr(tokens)
+        tokens.expect(';')
+        return node
 
     def __expr(self, tokens):
         '''
-        expr = equality
+        expr = assign
         '''
-        return self.__equality(tokens)
+        return self.__assign(tokens)
+
+    def __assign(self, tokens):
+        '''
+        assign = equality ("=" assign)?
+        '''
+        node = self.__equality(tokens)
+        if tokens.consume('='):
+            node = self.__create_node(NodeTypes.ASSIGN, node, self.__assign(tokens))
+        return node
 
     def __parse_common_func(self, tokens, map_, next_func):
         node = next_func(tokens)
@@ -112,12 +150,16 @@ class Parser:
 
     def __term(self, tokens):
         '''
-        term = num | "(" expr ")"
+        term = num | ident | "(" expr ")"
         '''
         token = tokens.consume('(')
         if token:
             node = self.__expr(tokens)
             tokens.expect(')')
+            return node
+        token = tokens.consume_ident()
+        if token:
+            node = self.__create_ident_node(token.code[:token.length])
             return node
         token_num = tokens.expect_num()
         return self.__create_num_node(token_num.value)

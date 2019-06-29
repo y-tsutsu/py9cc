@@ -1,11 +1,13 @@
 from collections import deque
 from enum import Enum, auto
+from string import ascii_lowercase
 
-from utility import error_at
+from utility import error, error_at
 
 
 class TokenTypes(Enum):
     RESERVED = auto()
+    IDENT = auto()
     NUM = auto()
 
 
@@ -27,16 +29,22 @@ class TokenResult:
 
     def consume(self, op):
         if self.__tokens:
-            token = self.__tokens[0]
-            if token.type == TokenTypes.RESERVED and token.code[: token.length] == op:
+            tk = self.__tokens[0]
+            if tk.type == TokenTypes.RESERVED and tk.code[: tk.length] == op:
                 token = self.__tokens.popleft()
                 return token
         return None
 
     def consume_num(self):
         if self.__tokens:
-            token = self.__tokens[0]
-            if token.type == TokenTypes.NUM:
+            if self.__tokens[0].type == TokenTypes.NUM:
+                token = self.__tokens.popleft()
+                return token
+        return None
+
+    def consume_ident(self):
+        if self.__tokens:
+            if self.__tokens[0].type == TokenTypes.IDENT:
                 token = self.__tokens.popleft()
                 return token
         return None
@@ -44,13 +52,19 @@ class TokenResult:
     def expect(self, op):
         token = self.consume(op)
         if not token:
-            error_at(self.__c_code, self.__tokens[0].code, f'{op}ではありません')
+            if self.__tokens:
+                error_at(self.__c_code, self.__tokens[0].code, f'{op}ではありません')
+            else:
+                error(f'{op}がありません')
         return token
 
     def expect_num(self):
         token = self.consume_num()
         if not token:
-            error_at(self.__c_code, self.__tokens[0].code, '数ではありません')
+            if self.__tokens:
+                error_at(self.__c_code, self.__tokens[0].code, '数ではありません')
+            else:
+                error('数がありません')
         return token
 
 
@@ -80,6 +94,7 @@ class Tokenizer:
     def __create_new_num_token(self, c_code):
         token = self.__create_new_token(TokenTypes.NUM, c_code, 0)
         token.value, _ = self.__trim_left_num(c_code)
+        token.length = len(token.value)
         return token
 
     def tokenize(self):
@@ -95,15 +110,22 @@ class Tokenizer:
 
             if c.isdigit():
                 token = self.__create_new_num_token(c_code)
-                _, c_code = self.__trim_left_num(c_code)
                 tokens.append(token)
+                c_code = c_code[token.length:]
                 continue
 
-            for x in (c_code[: 2], c):
-                if x in ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')'):
+            if c in ascii_lowercase:
+                token = self.__create_new_token(TokenTypes.IDENT, c_code, len(c))
+                tokens.append(token)
+                c_code = c_code[token.length:]
+                continue
+
+            cc = c_code[: 2]
+            for x in (cc, c):
+                if x in ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';'):
                     token = self.__create_new_token(TokenTypes.RESERVED, c_code, len(x))
                     tokens.append(token)
-                    c_code = c_code[len(x):]
+                    c_code = c_code[token.length:]
                     break
             else:
                 error_at(self.__c_code, c_code, 'トークナイズできません')

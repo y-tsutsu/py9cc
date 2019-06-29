@@ -16,9 +16,9 @@ def main():
     tokens = tokenizer.tokenize()
 
     parser = Parser(tokens)
-    node = parser.parse()
+    nodes = parser.parse()
 
-    generator = Generator(node, c_code)
+    generator = Generator(nodes, c_code)
     assembly = generator.generate()
 
     for x in assembly:
