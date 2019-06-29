@@ -1,7 +1,7 @@
 from collections import deque
 from enum import Enum, auto
 
-from utility import error_at, error
+from utility import error_at
 
 
 class TokenTypes(Enum):
@@ -25,21 +25,19 @@ class TokenResult:
         return len(self.__tokens) == 0
 
     def consume(self, op):
-        if not self.__tokens:
-            error('トークンが残っていません')
-        token = self.__tokens[0]
-        if token.type == TokenTypes.TK_RESERVED and token.code[0] == op:
-            token = self.__tokens.popleft()
-            return token
+        if self.__tokens:
+            token = self.__tokens[0]
+            if token.type == TokenTypes.TK_RESERVED and token.code[0] == op:
+                token = self.__tokens.popleft()
+                return token
         return None
 
     def consume_num(self):
-        if not self.__tokens:
-            error('トークンが残っていません')
-        token = self.__tokens[0]
-        if token.type == TokenTypes.TK_NUM:
-            token = self.__tokens.popleft()
-            return token
+        if self.__tokens:
+            token = self.__tokens[0]
+            if token.type == TokenTypes.TK_NUM:
+                token = self.__tokens.popleft()
+                return token
         return None
 
     def expect(self, op):
@@ -93,7 +91,7 @@ class Tokenizer:
                 c_code = c_code[1:]
                 continue
 
-            if c in ('+', '-'):
+            if c in ('+', '-', '*', '/', '(', ')'):
                 token = self.__create_new_token(TokenTypes.TK_RESERVED, c_code)
                 tokens.append(token)
                 c_code = c_code[1:]

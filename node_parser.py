@@ -1,8 +1,5 @@
 from enum import Enum, auto
 
-# from tokenizer import TokenTypes
-# from utility import error_at
-
 
 class NodeTypes(Enum):
     ND_ADD = auto()
@@ -44,13 +41,13 @@ class Parser:
         return node
 
     def parse(self):
-        return self.__expr(self.tokens)
+        return self.__expr(self.__tokens)
 
     def __expr(self, tokens):
         '''
         expr = mul ("+" mul | "-" mul)*
         '''
-        node = self.__mul()
+        node = self.__mul(tokens)
         while True:
             token_add = tokens.consume('+')
             token_sub = tokens.consume('-')
@@ -65,10 +62,10 @@ class Parser:
         '''
         mul = term ("*" term | "/" term)*
         '''
-        node = self.__term()
+        node = self.__term(tokens)
         while True:
-            token_mul = self.__tokens.consume('*')
-            token_div = self.__tokens.consume('/')
+            token_mul = tokens.consume('*')
+            token_div = tokens.consume('/')
             if token_mul:
                 node = self.__create_node(NodeTypes.ND_MUL, node, self.__term(tokens))
             elif token_div:

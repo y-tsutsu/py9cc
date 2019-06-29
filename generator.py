@@ -28,28 +28,30 @@ class Generator:
 
     def __gen_from_node(self, node):
         result = []
+        self.__gen_from_node_inner(node, result)
+        return result
 
+    def __gen_from_node_inner(self, node, output):
         if node.type == NodeTypes.ND_NUM:
-            print(f'  push {node.value}')
+            output.append(f'  push {node.value}')
             return
 
-        self.__gen_from_node(node.left)
-        self.__gen_from_node(node.right)
+        self.__gen_from_node_inner(node.left, output)
+        self.__gen_from_node_inner(node.right, output)
 
-        print('  pop rdi')
-        print('  pop rax')
+        output.append('  pop rdi')
+        output.append('  pop rax')
 
         if node.type == NodeTypes.ND_ADD:
-            result.append('  add rax, rdi')
+            output.append('  add rax, rdi')
         elif node.type == NodeTypes.ND_SUB:
-            result.append('  sub rax, rdi')
+            output.append('  sub rax, rdi')
         elif node.type == NodeTypes.ND_MUL:
-            result.append('  imul rax, rdi')
+            output.append('  imul rax, rdi')
         elif node.type == NodeTypes.ND_DIV:
-            result.append('  cqo')
-            result.append('  idiv rdi')
+            output.append('  cqo')
+            output.append('  idiv rdi')
         else:
             error(f'予期せぬノードです {node.type}')
 
-        result.append('  push rax')
-        return result
+        output.append('  push rax')
