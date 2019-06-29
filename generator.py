@@ -1,5 +1,4 @@
 from node_parser import NodeTypes
-from utility import error
 
 
 class Generator:
@@ -32,7 +31,7 @@ class Generator:
         return result
 
     def __gen_from_node_inner(self, node, output):
-        if node.type == NodeTypes.ND_NUM:
+        if node.type == NodeTypes.NUM:
             output.append(f'  push {node.value}')
             return
 
@@ -42,16 +41,32 @@ class Generator:
         output.append('  pop rdi')
         output.append('  pop rax')
 
-        if node.type == NodeTypes.ND_ADD:
-            output.append('  add rax, rdi')
-        elif node.type == NodeTypes.ND_SUB:
-            output.append('  sub rax, rdi')
-        elif node.type == NodeTypes.ND_MUL:
-            output.append('  imul rax, rdi')
-        elif node.type == NodeTypes.ND_DIV:
-            output.append('  cqo')
-            output.append('  idiv rdi')
-        else:
-            error(f'予期せぬノードです {node.type}')
+        map_ = {
+            NodeTypes.ADD: ['  add rax, rdi'],
+            NodeTypes.SUB: ['  sub rax, rdi'],
+            NodeTypes.MUL: ['  imul rdi'],
+            NodeTypes.DIV: ['  cqo',
+                            '  idiv rdi']
+        }
+        if node.type in map_:
+            output += map_[node.type]
+
+        map_ = {
+            NodeTypes.EQ: ['  cmp rax, rdi',
+                           '  sete al'],
+            NodeTypes.NE: ['  cmp rax, rdi',
+                           '  setne al'],
+            NodeTypes.LE: ['  cmp rax, rdi',
+                           '  setle al'],
+            NodeTypes.GE: ['  cmp rdi, rax',
+                           '  setle al'],
+            NodeTypes.LT: ['  cmp rax, rdi',
+                           '  setl al'],
+            NodeTypes.GT: ['  cmp rdi, rax',
+                           '  setl al'],
+        }
+        if node.type in map_:
+            output += map_[node.type]
+            output.append('  movzb rax, al')
 
         output.append('  push rax')

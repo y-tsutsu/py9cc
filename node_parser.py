@@ -2,11 +2,17 @@ from enum import Enum, auto
 
 
 class NodeTypes(Enum):
-    ND_ADD = auto()
-    ND_SUB = auto()
-    ND_MUL = auto()
-    ND_DIV = auto()
-    ND_NUM = auto()
+    ADD = auto()
+    SUB = auto()
+    MUL = auto()
+    DIV = auto()
+    NUM = auto()
+    EQ = auto()
+    NE = auto()
+    GT = auto()
+    GE = auto()
+    LT = auto()
+    LE = auto()
 
 
 class Node:
@@ -19,10 +25,13 @@ class Node:
 
 class Parser:
     '''
-    expr  = mul ("+" mul | "-" mul)*
-    mul   = unary ("*" unary | "/" unary)*
-    unary = ("+" | "-")? term
-    term  = num | "(" expr ")"
+    expr       = equality
+    equality   = relational ("==" relational | "!=" relational)*
+    relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+    add        = mul ("+" mul | "-" mul)*
+    mul        = unary ("*" unary | "/" unary)*
+    unary      = ("+" | "-")? term
+    term       = num | "(" expr ")"
     '''
 
     def __init__(self, tokens):
@@ -37,7 +46,7 @@ class Parser:
 
     def __create_num_node(self, value):
         node = Node()
-        node.type = NodeTypes.ND_NUM
+        node.type = NodeTypes.NUM
         node.value = value
         return node
 
@@ -46,33 +55,48 @@ class Parser:
 
     def __expr(self, tokens):
         '''
-        expr = mul ("+" mul | "-" mul)*
+        expr = equality
         '''
-        node = self.__mul(tokens)
+        return self.__equality(tokens)
+
+    def __parse_common_func(self, tokens, map_, next_func):
+        node = next_func(tokens)
         while True:
-            token_add = tokens.consume('+')
-            token_sub = tokens.consume('-')
-            if token_add:
-                node = self.__create_node(NodeTypes.ND_ADD, node, self.__mul(tokens))
-            elif token_sub:
-                node = self.__create_node(NodeTypes.ND_SUB, node, self.__mul(tokens))
+            for k, v in map_.items():
+                token = tokens.consume(k)
+                if token:
+                    node = self.__create_node(v, node, next_func(tokens))
+                    break
             else:
                 return node
+
+    def __equality(self, tokens):
+        '''
+        equality = relational ("==" relational | "!=" relational)*
+        '''
+        map_ = {'==': NodeTypes.EQ, '!=': NodeTypes.NE}
+        return self.__parse_common_func(tokens, map_, self.__relational)
+
+    def __relational(self, tokens):
+        '''
+        relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+        '''
+        map_ = {'<': NodeTypes.LT, '<=': NodeTypes.LE, '>': NodeTypes.GT, '>=': NodeTypes.GE}
+        return self.__parse_common_func(tokens, map_, self.__add)
+
+    def __add(self, tokens):
+        '''
+        add = mul ("+" mul | "-" mul)*
+        '''
+        map_ = {'+': NodeTypes.ADD, '-': NodeTypes.SUB}
+        return self.__parse_common_func(tokens, map_, self.__mul)
 
     def __mul(self, tokens):
         '''
         mul = unary ("*" unary | "/" unary)*
         '''
-        node = self.__unary(tokens)
-        while True:
-            token_mul = tokens.consume('*')
-            token_div = tokens.consume('/')
-            if token_mul:
-                node = self.__create_node(NodeTypes.ND_MUL, node, self.__unary(tokens))
-            elif token_div:
-                node = self.__create_node(NodeTypes.ND_DIV, node, self.__unary(tokens))
-            else:
-                return node
+        map_ = {'*': NodeTypes.MUL, '/': NodeTypes.DIV}
+        return self.__parse_common_func(tokens, map_, self.__unary)
 
     def __unary(self, tokens):
         '''
@@ -83,7 +107,7 @@ class Parser:
             return self.__term(tokens)
         token = tokens.consume('-')
         if token:
-            return self.__create_node(NodeTypes.ND_SUB, self.__create_num_node(0), self.__term(tokens))
+            return self.__create_node(NodeTypes.SUB, self.__create_num_node(0), self.__term(tokens))
         return self.__term(tokens)
 
     def __term(self, tokens):

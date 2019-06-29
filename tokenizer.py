@@ -5,8 +5,8 @@ from utility import error_at
 
 
 class TokenTypes(Enum):
-    TK_RESERVED = auto()
-    TK_NUM = auto()
+    RESERVED = auto()
+    NUM = auto()
 
 
 class Token:
@@ -14,6 +14,7 @@ class Token:
         self.type = None
         self.value = None
         self.code = None
+        self.length = None
 
 
 class TokenResult:
@@ -27,7 +28,7 @@ class TokenResult:
     def consume(self, op):
         if self.__tokens:
             token = self.__tokens[0]
-            if token.type == TokenTypes.TK_RESERVED and token.code[0] == op:
+            if token.type == TokenTypes.RESERVED and token.code[: token.length] == op:
                 token = self.__tokens.popleft()
                 return token
         return None
@@ -35,7 +36,7 @@ class TokenResult:
     def consume_num(self):
         if self.__tokens:
             token = self.__tokens[0]
-            if token.type == TokenTypes.TK_NUM:
+            if token.type == TokenTypes.NUM:
                 token = self.__tokens.popleft()
                 return token
         return None
@@ -69,14 +70,15 @@ class Tokenizer:
     def __trim_left_num(self, c_code):
         return self.__trim_left(c_code, lambda x: x.isdigit())
 
-    def __create_new_token(self, t_type, c_code):
+    def __create_new_token(self, t_type, c_code, length):
         token = Token()
         token.type = t_type
         token.code = c_code
+        token.length = length
         return token
 
     def __create_new_num_token(self, c_code):
-        token = self.__create_new_token(TokenTypes.TK_NUM, c_code)
+        token = self.__create_new_token(TokenTypes.NUM, c_code, 0)
         token.value, _ = self.__trim_left_num(c_code)
         return token
 
@@ -91,18 +93,19 @@ class Tokenizer:
                 c_code = c_code[1:]
                 continue
 
-            if c in ('+', '-', '*', '/', '(', ')'):
-                token = self.__create_new_token(TokenTypes.TK_RESERVED, c_code)
-                tokens.append(token)
-                c_code = c_code[1:]
-                continue
-
             if c.isdigit():
-                token = self.__create_new_token(TokenTypes.TK_NUM, c_code)
-                token.value, c_code = self.__trim_left_num(c_code)
+                token = self.__create_new_num_token(c_code)
+                _, c_code = self.__trim_left_num(c_code)
                 tokens.append(token)
                 continue
 
-            error_at(self.__c_code, c_code, 'トークナイズできません')
+            for x in (c_code[: 2], c):
+                if x in ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')'):
+                    token = self.__create_new_token(TokenTypes.RESERVED, c_code, len(x))
+                    tokens.append(token)
+                    c_code = c_code[len(x):]
+                    break
+            else:
+                error_at(self.__c_code, c_code, 'トークナイズできません')
 
         return TokenResult(tokens, self.__c_code)

@@ -2,25 +2,25 @@
 try() {
     expected="$1"
     input="$2"
-
+    
     python py9cc.py "$input" > tmp.s
-
+    
     if [ "$?" != "0" ]; then
         echo "py9cc.py error"
         exit 1
     fi
-
+    
     gcc -o tmp tmp.s
     ./tmp
     actual="$?"
-
+    
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"
     else
         echo "$input => $expected expected, but got $actual"
         exit 1
     fi
-
+    
     rm tmp.s tmp
 }
 
@@ -35,5 +35,21 @@ try 10 "-10+20"
 try 42 "+1*42"
 try 0 "1+(-1)"
 try 3 "1++2"
+try 1 "42==42"
+try 0 "42==23"
+try 1 "42!=23"
+try 0 "42!=42"
+try 1 "42<=43"
+try 1 "42<=42"
+try 0 "42<=41"
+try 1 "42<43"
+try 0 "42<42"
+try 0 "42<41"
+try 1 "43>=42"
+try 1 "42>=42"
+try 0 "41>=42"
+try 1 "43>42"
+try 0 "42>42"
+try 0 "41>42"
 
 echo OK
