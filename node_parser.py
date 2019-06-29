@@ -19,9 +19,10 @@ class Node:
 
 class Parser:
     '''
-    expr = mul ("+" mul | "-" mul)*
-    mul  = term ("*" term | "/" term)*
-    term = num | "(" expr ")"
+    expr  = mul ("+" mul | "-" mul)*
+    mul   = unary ("*" unary | "/" unary)*
+    unary = ("+" | "-")? term
+    term  = num | "(" expr ")"
     '''
 
     def __init__(self, tokens):
@@ -60,27 +61,39 @@ class Parser:
 
     def __mul(self, tokens):
         '''
-        mul = term ("*" term | "/" term)*
+        mul = unary ("*" unary | "/" unary)*
         '''
-        node = self.__term(tokens)
+        node = self.__unary(tokens)
         while True:
             token_mul = tokens.consume('*')
             token_div = tokens.consume('/')
             if token_mul:
-                node = self.__create_node(NodeTypes.ND_MUL, node, self.__term(tokens))
+                node = self.__create_node(NodeTypes.ND_MUL, node, self.__unary(tokens))
             elif token_div:
-                node = self.__create_node(NodeTypes.ND_DIV, node, self.__term(tokens))
+                node = self.__create_node(NodeTypes.ND_DIV, node, self.__unary(tokens))
             else:
                 return node
+
+    def __unary(self, tokens):
+        '''
+        unary = ("+" | "-")? term
+        '''
+        token = tokens.consume('+')
+        if token:
+            return self.__term(tokens)
+        token = tokens.consume('-')
+        if token:
+            return self.__create_node(NodeTypes.ND_SUB, self.__create_num_node(0), self.__term(tokens))
+        return self.__term(tokens)
 
     def __term(self, tokens):
         '''
         term = num | "(" expr ")"
         '''
-        token = self.__tokens.consume('(')
+        token = tokens.consume('(')
         if token:
             node = self.__expr(tokens)
-            self.__tokens.expect(')')
+            tokens.expect(')')
             return node
-        token_num = self.__tokens.expect_num()
+        token_num = tokens.expect_num()
         return self.__create_num_node(token_num.value)
