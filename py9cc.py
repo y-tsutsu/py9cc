@@ -1,6 +1,7 @@
 from sys import argv
 
 from generator import Generator
+from tokenizer import Tokenizer
 from utility import error
 
 
@@ -9,7 +10,11 @@ def main():
         error(f'引数の個数が正しくありません {argv}')
 
     c_code = argv[1]
-    generator = Generator(c_code)
+
+    tokenizer = Tokenizer(c_code)
+    tokens = tokenizer.tokenize()
+
+    generator = Generator(tokens)
     assembly = generator.generate()
 
     for x in assembly:

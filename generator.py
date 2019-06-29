@@ -1,3 +1,4 @@
+from tokenizer import TokenTypes
 from utility import error
 
 
@@ -12,12 +13,12 @@ def trim_left(c_code, conditions):
 
 
 class Generator:
-    def __init__(self, c_code):
-        self.__c_code = c_code
+    def __init__(self, tokens):
+        self.__tokens = tokens
 
     def generate(self):
         gen1 = self.__gen_pre()
-        gen2 = self.__gen_from_input(self.__c_code)
+        gen2 = self.__gen_from_input(self.__tokens)
         gen3 = self.__gen_suf()
         return gen1 + gen2 + gen3
 
@@ -34,20 +35,27 @@ class Generator:
         result.append('  ret')
         return result
 
-    def __gen_from_input(self, c_code):
+    def __gen_from_input(self, tokens):
         result = []
-        num, c_code = trim_left(c_code, lambda x: x.isdigit())
+
+        num = tokens[0].value
         result.append(f'  mov rax, {num}')
-        while c_code:
-            if c_code[0] == '+':
-                num, c_code = trim_left(c_code[1:], lambda x: x.isdigit())
-                result.append(f'  add rax, {num}')
-                continue
-            if c_code[0] == '-':
-                num, c_code = trim_left(c_code[1:], lambda x: x.isdigit())
-                result.append(f'  sub rax, {num}')
-                continue
+
+        tokens = tokens[1:]
+        while tokens:
+            token = tokens[0]
+            if token.type == TokenTypes.TK_RESERVED:
+                map_ = {'+': 'add', '-': 'sub'}
+                if token.code[0] in map_:
+                    next_token = tokens[1]
+                    if next_token.type == TokenTypes.TK_NUM:
+                        command = map_[token.code[0]]
+                        result.append(f'  {command} rax, {next_token.value}')
+                        tokens = tokens[2:]
+                    else:
+                        error('TokenTypes.TK_RESERVEDでありません')
             else:
-                error(f'予期しない文字です: {c_code[0]}')
+                error('TokenTypes.TK_RESERVEDでありません')
+
         result.append('  push rax')
         return result
