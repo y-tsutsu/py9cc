@@ -7,11 +7,9 @@ from utility import error
 def main():
     if len(argv) != 2:
         error(f'引数の個数が正しくありません {argv}')
-        exit(1)
 
-    user_input = argv[1]
-
-    generator = Generator(int(user_input))
+    c_code = argv[1]
+    generator = Generator(c_code)
     assembly = generator.generate()
 
     for x in assembly:
