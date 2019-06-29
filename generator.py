@@ -1,5 +1,5 @@
 from tokenizer import TokenTypes
-from utility import error
+from utility import error_at
 
 
 def trim_left(c_code, conditions):
@@ -13,8 +13,9 @@ def trim_left(c_code, conditions):
 
 
 class Generator:
-    def __init__(self, tokens):
+    def __init__(self, tokens, c_code):
         self.__tokens = tokens
+        self.__c_code = c_code
 
     def generate(self):
         gen1 = self.__gen_pre()
@@ -38,8 +39,12 @@ class Generator:
     def __gen_from_input(self, tokens):
         result = []
 
-        num = tokens[0].value
-        result.append(f'  mov rax, {num}')
+        token = tokens[0]
+        if token.type == TokenTypes.TK_NUM:
+            num = token.value
+            result.append(f'  mov rax, {num}')
+        else:
+            error_at(self.__c_code, token.code, f'{TokenTypes.TK_NUM}ではありません')
 
         tokens = tokens[1:]
         while tokens:
@@ -53,9 +58,9 @@ class Generator:
                         result.append(f'  {command} rax, {next_token.value}')
                         tokens = tokens[2:]
                     else:
-                        error('TokenTypes.TK_RESERVEDでありません')
+                        error_at(self.__c_code, next_token.code, f'{TokenTypes.TK_NUM}ではありません')
             else:
-                error('TokenTypes.TK_RESERVEDでありません')
+                error_at(self.__c_code, token.code, f'{TokenTypes.TK_RESERVED}ではありません')
 
         result.append('  push rax')
         return result

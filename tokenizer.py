@@ -1,6 +1,6 @@
 from enum import Enum, auto
 
-from utility import error
+from utility import error_at
 
 
 class TokenTypes(Enum):
@@ -65,6 +65,6 @@ class Tokenizer:
                 result.append(token)
                 continue
 
-            error('トークナイズできません')
+            error_at(self.__c_code, c_code, 'トークナイズできません')
 
         return result

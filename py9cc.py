@@ -14,7 +14,7 @@ def main():
     tokenizer = Tokenizer(c_code)
     tokens = tokenizer.tokenize()
 
-    generator = Generator(tokens)
+    generator = Generator(tokens, c_code)
     assembly = generator.generate()
 
     for x in assembly:
