@@ -1,4 +1,5 @@
 from node_parser import NodeTypes
+from utility import error
 
 
 class Generator:
@@ -8,9 +9,10 @@ class Generator:
 
     def generate(self):
         gen1 = self.__gen_pre()
-        gen2 = self.__gen_from_node(self.__nodes)
-        gen3 = self.__gen_suf()
-        return gen1 + gen2 + gen3
+        gen2 = self.__gen_prologue()
+        gen3 = self.__gen_from_nodes(self.__nodes)
+        gen4 = self.__gen_epilogue()
+        return gen1 + gen2 + gen3 + gen4
 
     def __gen_pre(self):
         result = []
@@ -19,21 +21,34 @@ class Generator:
         result.append('main:')
         return result
 
-    def __gen_suf(self):
+    def __gen_prologue(self):
         result = []
-        result.append('  pop rax')
+        result.append('  push rbp')
+        result.append('  mov rbp, rsp')
+        result.append('  sub rsp, 208')
+        return result
+
+    def __gen_epilogue(self):
+        result = []
+        result.append('  mov rsp, rbp')
+        result.append('  pop rbp')
         result.append('  ret')
         return result
 
-    def __gen_from_node(self, nodes):
+    def __gen_from_nodes(self, nodes):
         result = []
         for x in nodes:
             self.__gen_from_node_inner(x, result)
+            result.append('  pop rax')
         return result
 
     def __gen_from_node_inner(self, node, output):
         if node.type == NodeTypes.NUM:
             output.append(f'  push {node.value}')
+            return
+
+        if node.type == NodeTypes.LVAR or node.type == NodeTypes.ASSIGN:
+            self.__gen_address(node, output)
             return
 
         self.__gen_from_node_inner(node.left, output)
@@ -71,3 +86,26 @@ class Generator:
             output.append('  movzb rax, al')
 
         output.append('  push rax')
+
+    def __gen_lval(self, node, output):
+        if node.type != NodeTypes.LVAR:
+            error('代入の左辺値が変数ではありません')
+        output.append(f'  mov rax, rbp')
+        output.append(f'  sub rax, {node.offset}')
+        output.append(f'  push rax')
+
+    def __gen_address(self, node, output):
+        if node.type == NodeTypes.LVAR:
+            self.__gen_lval(node, output)
+            output.append('  pop rax')
+            output.append('  mov rax, [rax]')
+            output.append('  push rax')
+        elif node.type == NodeTypes.ASSIGN:
+            self.__gen_lval(node.left, output)
+            self.__gen_from_node_inner(node.right, output)
+            output.append('  pop rdi')
+            output.append('  pop rax')
+            output.append('  mov [rax], rdi')
+            output.append('  push rdi')
+        else:
+            error(f'予期せぬノードの種別です {node.type}')

@@ -61,6 +61,7 @@ class Parser:
         node = Node()
         node.type = NodeTypes.LVAR
         node.offset = (ascii_lowercase.find(name) + 1) * 8
+        return node
 
     def parse(self):
         return self.__program(self.__tokens)

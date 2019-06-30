@@ -122,7 +122,7 @@ class Tokenizer:
 
             cc = c_code[: 2]
             for x in (cc, c):
-                if x in ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';'):
+                if x in ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '='):
                     token = self.__create_new_token(TokenTypes.RESERVED, c_code, len(x))
                     tokens.append(token)
                     c_code = c_code[token.length:]
