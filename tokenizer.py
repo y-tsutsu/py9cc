@@ -1,6 +1,6 @@
 from collections import deque
 from enum import Enum, auto
-from string import ascii_lowercase
+from string import ascii_letters, digits
 
 from utility import error, error_at
 
@@ -70,6 +70,8 @@ class TokenResult:
 
 class Tokenizer:
     __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=')
+    __var_name_head = ascii_letters + '_'
+    __var_name = digits + __var_name_head
 
     def __init__(self, c_code):
         self.__c_code = c_code
@@ -86,6 +88,9 @@ class Tokenizer:
     def __trim_left_num(self, c_code):
         return self.__trim_left(c_code, lambda x: x.isdigit())
 
+    def __trim_left_varname(self, c_code):
+        return self.__trim_left(c_code, lambda x: x in Tokenizer.__var_name)
+
     def __create_new_token(self, t_type, c_code, length):
         token = Token()
         token.type = t_type
@@ -94,9 +99,14 @@ class Tokenizer:
         return token
 
     def __create_new_num_token(self, c_code):
-        token = self.__create_new_token(TokenTypes.NUM, c_code, 0)
-        token.value, _ = self.__trim_left_num(c_code)
-        token.length = len(token.value)
+        num, _ = self.__trim_left_num(c_code)
+        token = self.__create_new_token(TokenTypes.NUM, c_code, len(num))
+        token.value = num
+        return token
+
+    def __create_new_varname_token(self, c_code):
+        name, _ = self.__trim_left_varname(c_code)
+        token = self.__create_new_token(TokenTypes.IDENT, c_code, len(name))
         return token
 
     def tokenize(self):
@@ -116,8 +126,8 @@ class Tokenizer:
                 c_code = c_code[token.length:]
                 continue
 
-            if c in ascii_lowercase:
-                token = self.__create_new_token(TokenTypes.IDENT, c_code, len(c))
+            if c in Tokenizer.__var_name_head:
+                token = self.__create_new_varname_token(c_code)
                 tokens.append(token)
                 c_code = c_code[token.length:]
                 continue

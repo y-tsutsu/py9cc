@@ -3,13 +3,14 @@ from utility import error
 
 
 class Generator:
-    def __init__(self, nodes, c_code):
+    def __init__(self, nodes, c_code, varsize):
         self.__nodes = nodes
         self.__c_code = c_code
+        self.__varsize = varsize
 
     def generate(self):
         gen1 = self.__gen_pre()
-        gen2 = self.__gen_prologue()
+        gen2 = self.__gen_prologue(self.__varsize)
         gen3 = self.__gen_from_nodes(self.__nodes)
         gen4 = self.__gen_epilogue()
         return gen1 + gen2 + gen3 + gen4
@@ -21,11 +22,11 @@ class Generator:
         result.append('main:')
         return result
 
-    def __gen_prologue(self):
+    def __gen_prologue(self, varsize):
         result = []
-        result.append('  push rbp')
-        result.append('  mov rbp, rsp')
-        result.append('  sub rsp, 208')
+        result.append(f'  push rbp')
+        result.append(f'  mov rbp, rsp')
+        result.append(f'  sub rsp, {varsize}')
         return result
 
     def __gen_epilogue(self):

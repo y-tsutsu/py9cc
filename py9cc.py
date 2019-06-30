@@ -18,7 +18,7 @@ def main():
     parser = Parser(tokens)
     nodes = parser.parse()
 
-    generator = Generator(nodes, c_code)
+    generator = Generator(nodes, c_code, parser.varsize)
     assembly = generator.generate()
 
     for x in assembly:

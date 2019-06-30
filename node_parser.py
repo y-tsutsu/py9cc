@@ -1,5 +1,4 @@
 from enum import Enum, auto
-from string import ascii_lowercase
 
 
 class NodeTypes(Enum):
@@ -43,6 +42,7 @@ class Parser:
 
     def __init__(self, tokens):
         self.__tokens = tokens
+        self.__varnames = []
 
     def __create_node(self, n_type, left, right):
         node = Node()
@@ -60,7 +60,9 @@ class Parser:
     def __create_ident_node(self, name):
         node = Node()
         node.type = NodeTypes.LVAR
-        node.offset = (ascii_lowercase.find(name) + 1) * 8
+        if name not in self.__varnames:
+            self.__varnames.append(name)
+        node.offset = (self.__varnames.index(name) + 1) * 8
         return node
 
     def parse(self):
@@ -164,3 +166,7 @@ class Parser:
             return node
         token_num = tokens.expect_num()
         return self.__create_num_node(token_num.value)
+
+    @property
+    def varsize(self):
+        return len(self.__varnames) * 8
