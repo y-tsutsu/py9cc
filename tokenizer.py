@@ -7,6 +7,7 @@ from utility import error, error_at
 
 class TokenTypes(Enum):
     RESERVED = auto()
+    RETURN = auto()
     IDENT = auto()
     NUM = auto()
 
@@ -35,19 +36,21 @@ class TokenResult:
                 return token
         return None
 
-    def consume_num(self):
+    def __consume_inner(self, t_type):
         if self.__tokens:
-            if self.__tokens[0].type == TokenTypes.NUM:
+            if self.__tokens[0].type == t_type:
                 token = self.__tokens.popleft()
                 return token
         return None
 
+    def consume_num(self):
+        return self.__consume_inner(TokenTypes.NUM)
+
     def consume_ident(self):
-        if self.__tokens:
-            if self.__tokens[0].type == TokenTypes.IDENT:
-                token = self.__tokens.popleft()
-                return token
-        return None
+        return self.__consume_inner(TokenTypes.IDENT)
+
+    def consume_return(self):
+        return self.__consume_inner(TokenTypes.RETURN)
 
     def expect(self, op):
         token = self.consume(op)
@@ -109,6 +112,17 @@ class Tokenizer:
         token = self.__create_new_token(TokenTypes.IDENT, c_code, len(name))
         return token
 
+    def __create_new_reserved_token(self, c_code, reserved):
+        map_ = {'return': TokenTypes.RETURN}
+        if reserved not in map_:
+            error(f'不正な予約語です {reserved}')
+        token = self.__create_new_token(map_[reserved], c_code, len(reserved))
+        return token
+
+    def __is_reserved_token(self, c_code, reserved):
+        rlen = len(reserved)
+        return (reserved == c_code[:rlen]) and (c_code[rlen] not in Tokenizer.__var_name)
+
     def tokenize(self):
         tokens = []
 
@@ -122,6 +136,12 @@ class Tokenizer:
 
             if c.isdigit():
                 token = self.__create_new_num_token(c_code)
+                tokens.append(token)
+                c_code = c_code[token.length:]
+                continue
+
+            if self.__is_reserved_token(c_code, 'return'):
+                token = self.__create_new_reserved_token(c_code, 'return')
                 tokens.append(token)
                 c_code = c_code[token.length:]
                 continue

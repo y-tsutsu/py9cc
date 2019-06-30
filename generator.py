@@ -44,6 +44,9 @@ class Generator:
         return result
 
     def __gen_from_node_inner(self, node, output):
+        if self.__gen_return(node, output):
+            return
+
         if self.__gen_num(node, output):
             return
 
@@ -60,6 +63,17 @@ class Generator:
         _ = self.__gen_comparison_operation(node, output)
 
         output.append('  push rax')
+
+    def __gen_return(self, node, output):
+        if node.type == NodeTypes.RETURN:
+            self.__gen_from_node_inner(node.left, output)
+            output.append('  pop rax')
+            output.append('  mov rsp, rbp')
+            output.append('  pop rbp')
+            output.append('  ret')
+        else:
+            return False
+        return True
 
     def __gen_num(self, node, output):
         if node.type == NodeTypes.NUM:

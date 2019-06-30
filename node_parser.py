@@ -15,6 +15,7 @@ class NodeTypes(Enum):
     LE = auto()
     ASSIGN = auto()
     LVAR = auto()
+    RETURN = auto()
 
 
 class Node:
@@ -29,7 +30,7 @@ class Node:
 class Parser:
     '''
     program    = stmt*
-    stmt       = expr ";"
+    stmt       = expr ";" | "return" expr ";"
     expr       = assign
     assign     = equality ("=" assign)?
     equality   = relational ("==" relational | "!=" relational)*
@@ -65,6 +66,10 @@ class Parser:
         node.offset = (self.__varnames.index(name) + 1) * 8
         return node
 
+    def __create_return_node(self, left):
+        node = self.__create_node(NodeTypes.RETURN, left, None)
+        return node
+
     def parse(self):
         return self.__program(self.__tokens)
 
@@ -79,9 +84,12 @@ class Parser:
 
     def __stmt(self, tokens):
         '''
-        stmt = expr ";"
+        stmt = expr ";" | "return" expr ";"
         '''
-        node = self.__expr(tokens)
+        if tokens.consume_return():
+            node = self.__create_node(NodeTypes.RETURN, self.__expr(tokens), None)
+        else:
+            node = self.__expr(tokens)
         tokens.expect(';')
         return node
 
