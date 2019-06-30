@@ -69,6 +69,8 @@ class TokenResult:
 
 
 class Tokenizer:
+    __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=')
+
     def __init__(self, c_code):
         self.__c_code = c_code
 
@@ -122,7 +124,7 @@ class Tokenizer:
 
             cc = c_code[: 2]
             for x in (cc, c):
-                if x in ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '='):
+                if x in Tokenizer.__symbols:
                     token = self.__create_new_token(TokenTypes.RESERVED, c_code, len(x))
                     tokens.append(token)
                     c_code = c_code[token.length:]

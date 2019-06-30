@@ -43,12 +43,10 @@ class Generator:
         return result
 
     def __gen_from_node_inner(self, node, output):
-        if node.type == NodeTypes.NUM:
-            output.append(f'  push {node.value}')
+        if self.__gen_num(node, output):
             return
 
-        if node.type == NodeTypes.LVAR or node.type == NodeTypes.ASSIGN:
-            self.__gen_address(node, output)
+        if self.__gen_address(node, output):
             return
 
         self.__gen_from_node_inner(node.left, output)
@@ -57,6 +55,36 @@ class Generator:
         output.append('  pop rdi')
         output.append('  pop rax')
 
+        _ = self.__gen_arithmetic_operation(node, output)
+        _ = self.__gen_comparison_operation(node, output)
+
+        output.append('  push rax')
+
+    def __gen_num(self, node, output):
+        if node.type == NodeTypes.NUM:
+            output.append(f'  push {node.value}')
+        else:
+            return False
+        return True
+
+    def __gen_address(self, node, output):
+        if node.type == NodeTypes.LVAR:
+            self.__gen_lval(node, output)
+            output.append('  pop rax')
+            output.append('  mov rax, [rax]')
+            output.append('  push rax')
+        elif node.type == NodeTypes.ASSIGN:
+            self.__gen_lval(node.left, output)
+            self.__gen_from_node_inner(node.right, output)
+            output.append('  pop rdi')
+            output.append('  pop rax')
+            output.append('  mov [rax], rdi')
+            output.append('  push rdi')
+        else:
+            return False
+        return True
+
+    def __gen_arithmetic_operation(self, node, output):
         map_ = {
             NodeTypes.ADD: ['  add rax, rdi'],
             NodeTypes.SUB: ['  sub rax, rdi'],
@@ -66,7 +94,10 @@ class Generator:
         }
         if node.type in map_:
             output += map_[node.type]
+            return True
+        return False
 
+    def __gen_comparison_operation(self, node, output):
         map_ = {
             NodeTypes.EQ: ['  cmp rax, rdi',
                            '  sete al'],
@@ -84,8 +115,8 @@ class Generator:
         if node.type in map_:
             output += map_[node.type]
             output.append('  movzb rax, al')
-
-        output.append('  push rax')
+            return True
+        return False
 
     def __gen_lval(self, node, output):
         if node.type != NodeTypes.LVAR:
@@ -93,19 +124,3 @@ class Generator:
         output.append(f'  mov rax, rbp')
         output.append(f'  sub rax, {node.offset}')
         output.append(f'  push rax')
-
-    def __gen_address(self, node, output):
-        if node.type == NodeTypes.LVAR:
-            self.__gen_lval(node, output)
-            output.append('  pop rax')
-            output.append('  mov rax, [rax]')
-            output.append('  push rax')
-        elif node.type == NodeTypes.ASSIGN:
-            self.__gen_lval(node.left, output)
-            self.__gen_from_node_inner(node.right, output)
-            output.append('  pop rdi')
-            output.append('  pop rax')
-            output.append('  mov [rax], rdi')
-            output.append('  push rdi')
-        else:
-            error(f'予期せぬノードの種別です {node.type}')
