@@ -1,7 +1,7 @@
 from sys import argv
 
 from generator import Generator
-from nparser import Parser
+from node import Parser
 from tokenizer import Tokenizer
 from utility import error
 
