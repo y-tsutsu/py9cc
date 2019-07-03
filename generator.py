@@ -1,4 +1,4 @@
-from node_parser import NodeTypes
+from nparser import NodeTypes
 from utility import error
 
 
@@ -44,29 +44,17 @@ class Generator:
         return result
 
     def __gen_from_node_inner(self, node, output):
-        if self.__gen_return(node, output):
-            return
+        funcs = [self.__gen_return, self.__gen_num, self.__gen_ident,
+                 self.__gen_assign, self.__gen_operator]
+        for func in funcs:
+            if func(node, output):
+                return
 
-        if self.__gen_num(node, output):
-            return
-
-        if self.__gen_address(node, output):
-            return
-
-        self.__gen_from_node_inner(node.left, output)
-        self.__gen_from_node_inner(node.right, output)
-
-        output.append('  pop rdi')
-        output.append('  pop rax')
-
-        _ = self.__gen_arithmetic_operation(node, output)
-        _ = self.__gen_comparison_operation(node, output)
-
-        output.append('  push rax')
+        error(f'ジェネレートできませんでした {node.type}')
 
     def __gen_return(self, node, output):
         if node.type == NodeTypes.RETURN:
-            self.__gen_from_node_inner(node.left, output)
+            self.__gen_from_node_inner(node.child, output)
             output.append('  pop rax')
             output.append('  mov rsp, rbp')
             output.append('  pop rbp')
@@ -82,13 +70,18 @@ class Generator:
             return False
         return True
 
-    def __gen_address(self, node, output):
-        if node.type == NodeTypes.LVAR:
+    def __gen_ident(self, node, output):
+        if node.type == NodeTypes.IDENT:
             self.__gen_lval(node, output)
             output.append('  pop rax')
             output.append('  mov rax, [rax]')
             output.append('  push rax')
-        elif node.type == NodeTypes.ASSIGN:
+        else:
+            return False
+        return True
+
+    def __gen_assign(self, node, output):
+        if node.type == NodeTypes.ASSIGN:
             self.__gen_lval(node.left, output)
             self.__gen_from_node_inner(node.right, output)
             output.append('  pop rdi')
@@ -99,7 +92,22 @@ class Generator:
             return False
         return True
 
-    def __gen_arithmetic_operation(self, node, output):
+    def __gen_operator(self, node, output):
+        self.__gen_from_node_inner(node.left, output)
+        self.__gen_from_node_inner(node.right, output)
+
+        output.append('  pop rdi')
+        output.append('  pop rax')
+
+        if self.__gen_operation_arithmetic(node, output) or self.__gen_operation_comparison(node, output):
+            pass
+        else:
+            return False
+
+        output.append('  push rax')
+        return True
+
+    def __gen_operation_arithmetic(self, node, output):
         map_ = {
             NodeTypes.ADD: ['  add rax, rdi'],
             NodeTypes.SUB: ['  sub rax, rdi'],
@@ -112,7 +120,7 @@ class Generator:
             return True
         return False
 
-    def __gen_comparison_operation(self, node, output):
+    def __gen_operation_comparison(self, node, output):
         map_ = {
             NodeTypes.EQ: ['  cmp rax, rdi',
                            '  sete al'],
@@ -134,7 +142,7 @@ class Generator:
         return False
 
     def __gen_lval(self, node, output):
-        if node.type != NodeTypes.LVAR:
+        if node.type != NodeTypes.IDENT:
             error('代入の左辺値が変数ではありません')
         output.append(f'  mov rax, rbp')
         output.append(f'  sub rax, {node.offset}')

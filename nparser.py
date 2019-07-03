@@ -14,17 +14,13 @@ class NodeTypes(Enum):
     LT = auto()
     LE = auto()
     ASSIGN = auto()
-    LVAR = auto()
+    IDENT = auto()
     RETURN = auto()
 
 
 class Node:
-    def __init__(self):
-        self.type = None
-        self.left = None
-        self.right = None
-        self.value = None
-        self.offset = None
+    def __init__(self, n_type):
+        self.type = n_type
 
 
 class Parser:
@@ -45,29 +41,27 @@ class Parser:
         self.__tokens = tokens
         self.__varnames = []
 
-    def __create_node(self, n_type, left, right):
-        node = Node()
-        node.type = n_type
+    def __create_ope_node(self, n_type, left, right):
+        node = Node(n_type)
         node.left = left
         node.right = right
         return node
 
     def __create_num_node(self, value):
-        node = Node()
-        node.type = NodeTypes.NUM
+        node = Node(NodeTypes.NUM)
         node.value = value
         return node
 
     def __create_ident_node(self, name):
-        node = Node()
-        node.type = NodeTypes.LVAR
+        node = Node(NodeTypes.IDENT)
         if name not in self.__varnames:
             self.__varnames.append(name)
         node.offset = (self.__varnames.index(name) + 1) * 8
         return node
 
-    def __create_return_node(self, left):
-        node = self.__create_node(NodeTypes.RETURN, left, None)
+    def __create_return_node(self, child):
+        node = Node(NodeTypes.RETURN)
+        node.child = child
         return node
 
     def parse(self):
@@ -87,7 +81,7 @@ class Parser:
         stmt = expr ";" | "return" expr ";"
         '''
         if tokens.consume_return():
-            node = self.__create_node(NodeTypes.RETURN, self.__expr(tokens), None)
+            node = self.__create_return_node(self.__expr(tokens))
         else:
             node = self.__expr(tokens)
         tokens.expect(';')
@@ -105,7 +99,7 @@ class Parser:
         '''
         node = self.__equality(tokens)
         if tokens.consume('='):
-            node = self.__create_node(NodeTypes.ASSIGN, node, self.__assign(tokens))
+            node = self.__create_ope_node(NodeTypes.ASSIGN, node, self.__assign(tokens))
         return node
 
     def __parse_common_func(self, tokens, map_, next_func):
@@ -114,7 +108,7 @@ class Parser:
             for k, v in map_.items():
                 token = tokens.consume(k)
                 if token:
-                    node = self.__create_node(v, node, next_func(tokens))
+                    node = self.__create_ope_node(v, node, next_func(tokens))
                     break
             else:
                 return node
@@ -156,7 +150,7 @@ class Parser:
             return self.__term(tokens)
         token = tokens.consume('-')
         if token:
-            return self.__create_node(NodeTypes.SUB, self.__create_num_node(0), self.__term(tokens))
+            return self.__create_ope_node(NodeTypes.SUB, self.__create_num_node(0), self.__term(tokens))
         return self.__term(tokens)
 
     def __term(self, tokens):
