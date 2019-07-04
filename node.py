@@ -1,7 +1,8 @@
 from enum import Enum, auto
 
-from generator import (AssignGenerator, IdentGenerator, IfGenerator,
-                       NumGenerator, OperatorGenerator, ReturnGenerator)
+from generator import (AssignGenerator, IdentGenerator, IfElseGenerator,
+                       IfGenerator, NumGenerator, OperatorGenerator,
+                       ReturnGenerator)
 
 
 class NodeTypes(Enum):
@@ -20,6 +21,7 @@ class NodeTypes(Enum):
     IDENT = auto()
     RETURN = auto()
     IF = auto()
+    IF_ELSE = auto()
     WHILE = auto()
     FOR = auto()
 
@@ -77,6 +79,14 @@ class NodeFactory:
         node.stmt = stmt
         return node
 
+    @classmethod
+    def create_if_else_node(self, expr, stmt, else_stmt):
+        node = Node(NodeTypes.IF_ELSE, IfElseGenerator())
+        node.expr = expr
+        node.stmt = stmt
+        node.else_stmt = else_stmt
+        return node
+
 
 class Parser:
     '''
@@ -125,7 +135,11 @@ class Parser:
             expr = self.__expr(tokens)
             tokens.expect_symbol(')')
             stmt = self.__stmt(tokens)
-            node = NodeFactory.create_if_node(expr, stmt)
+            else_stmt = self.__stmt(tokens) if tokens.consume_else() else None
+            if else_stmt:
+                node = NodeFactory.create_if_else_node(expr, stmt, else_stmt)
+            else:
+                node = NodeFactory.create_if_node(expr, stmt)
         elif tokens.consume_while():
             pass
         elif tokens.consume_for():

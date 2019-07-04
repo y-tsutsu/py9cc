@@ -57,5 +57,7 @@ try 130 "hoge = 42; piyo = hoge + 23; fuga = piyo * 2; return fuga;"
 try 6 "x = 2; if (x == 2) x = x * 3; return x;"
 try 2 "x = 2; if (x == 1) x = x * 3; return x;"
 try 24 "x = 2; y = 0; z = 0; if (x == 2) y = x * 3; if (y > 0) z = y * 4; return z;"
+try 6 "x = 2; y = 0; if (x == 2) y = x * 3; else y = x * 4; return y;"
+try 8 "x = 2; y = 0; if (x == 1) y = x * 3; else y = x * 4; return y;"
 
 echo OK
