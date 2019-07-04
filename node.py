@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
-from generator import (AssignGenerator, IdentGenerator, NumGenerator,
-                       OperatorGenerator, ReturnGenerator)
+from generator import (AssignGenerator, IdentGenerator, IfGenerator,
+                       NumGenerator, OperatorGenerator, ReturnGenerator)
 
 
 class NodeTypes(Enum):
@@ -19,6 +19,9 @@ class NodeTypes(Enum):
     ASSIGN = auto()
     IDENT = auto()
     RETURN = auto()
+    IF = auto()
+    WHILE = auto()
+    FOR = auto()
 
 
 class Node:
@@ -67,11 +70,22 @@ class NodeFactory:
         node.child = child
         return node
 
+    @classmethod
+    def create_if_node(self, expr, stmt):
+        node = Node(NodeTypes.IF, IfGenerator())
+        node.expr = expr
+        node.stmt = stmt
+        return node
+
 
 class Parser:
     '''
     program    = stmt*
-    stmt       = expr ";" | "return" expr ";"
+    stmt       = expr ";"
+               | "if" "(" expr ")" stmt ("else" stmt)?
+               | "while" "(" expr ")" stmt
+               | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+               | "return" expr ";"
     expr       = assign
     assign     = equality ("=" assign)?
     equality   = relational ("==" relational | "!=" relational)*
@@ -100,13 +114,28 @@ class Parser:
 
     def __stmt(self, tokens):
         '''
-        stmt = expr ";" | "return" expr ";"
+        stmt = expr ";"
+             | "if" "(" expr ")" stmt ("else" stmt)?
+             | "while" "(" expr ")" stmt
+             | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+             | "return" expr ";"
         '''
-        if tokens.consume_return():
+        if tokens.consume_if():
+            tokens.expect_symbol('(')
+            expr = self.__expr(tokens)
+            tokens.expect_symbol(')')
+            stmt = self.__stmt(tokens)
+            node = NodeFactory.create_if_node(expr, stmt)
+        elif tokens.consume_while():
+            pass
+        elif tokens.consume_for():
+            pass
+        elif tokens.consume_return():
             node = NodeFactory.create_return_node(self.__expr(tokens))
+            tokens.expect_symbol(';')
         else:
             node = self.__expr(tokens)
-        tokens.expect_symbol(';')
+            tokens.expect_symbol(';')
         return node
 
     def __expr(self, tokens):

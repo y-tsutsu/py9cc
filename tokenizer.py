@@ -8,6 +8,10 @@ from utility import error, error_at
 class TokenTypes(Enum):
     SYMBOL = auto()
     RETURN = auto()
+    IF = auto()
+    ELSE = auto()
+    WHILE = auto()
+    FOR = auto()
     IDENT = auto()
     NUM = auto()
 
@@ -44,6 +48,18 @@ class TokenResult:
     def consume_return(self):
         return self.__consume_inner(TokenTypes.RETURN)
 
+    def consume_if(self):
+        return self.__consume_inner(TokenTypes.IF)
+
+    def consume_else(self):
+        return self.__consume_inner(TokenTypes.ELSE)
+
+    def consume_while(self):
+        return self.__consume_inner(TokenTypes.WHILE)
+
+    def consume_for(self):
+        return self.__consume_inner(TokenTypes.FOR)
+
     def consume_symbol(self, symbol):
         if self.__tokens:
             tk = self.__tokens[0]
@@ -73,6 +89,7 @@ class TokenResult:
 
 class Tokenizer:
     __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=')
+    __reserved_map = {'return': TokenTypes.RETURN, 'if': TokenTypes.IF, 'else': TokenTypes.ELSE, 'while': TokenTypes.WHILE, 'for': TokenTypes.FOR}
     __var_name_head = ascii_letters + '_'
     __var_name = digits + __var_name_head
 
@@ -94,34 +111,35 @@ class Tokenizer:
     def __trim_left_varname(self, c_code):
         return self.__trim_left(c_code, lambda x: x in Tokenizer.__var_name)
 
-    def __create_new_token(self, t_type, c_code, length):
+    def __create_token(self, t_type, c_code, length):
         token = Token()
         token.type = t_type
         token.code = c_code
         token.length = length
         return token
 
-    def __create_new_num_token(self, c_code):
+    def __create_num_token(self, c_code):
         num, _ = self.__trim_left_num(c_code)
-        token = self.__create_new_token(TokenTypes.NUM, c_code, len(num))
+        token = self.__create_token(TokenTypes.NUM, c_code, len(num))
         token.value = num
         return token
 
-    def __create_new_varname_token(self, c_code):
+    def __create_varname_token(self, c_code):
         name, _ = self.__trim_left_varname(c_code)
-        token = self.__create_new_token(TokenTypes.IDENT, c_code, len(name))
+        token = self.__create_token(TokenTypes.IDENT, c_code, len(name))
         return token
 
-    def __create_new_reserved_token(self, c_code, reserved):
-        map_ = {'return': TokenTypes.RETURN}
-        if reserved not in map_:
+    def __create_reserved_token(self, c_code, reserved):
+        if reserved not in Tokenizer.__reserved_map:
             error(f'不正な予約語です {reserved}')
-        token = self.__create_new_token(map_[reserved], c_code, len(reserved))
+        token = self.__create_token(Tokenizer.__reserved_map[reserved], c_code, len(reserved))
         return token
 
-    def __is_reserved_token(self, c_code, reserved):
-        rlen = len(reserved)
-        return (reserved == c_code[:rlen]) and (c_code[rlen] not in Tokenizer.__var_name)
+    def __startswith_reserved(self, c_code):
+        for reserved in Tokenizer.__reserved_map:
+            if (c_code.startswith(reserved)) and (c_code[len(reserved)] not in Tokenizer.__var_name):
+                return reserved
+        return None
 
     def tokenize(self):
         tokens = []
@@ -135,19 +153,20 @@ class Tokenizer:
                 continue
 
             if c.isdigit():
-                token = self.__create_new_num_token(c_code)
+                token = self.__create_num_token(c_code)
                 tokens.append(token)
                 c_code = c_code[token.length:]
                 continue
 
-            if self.__is_reserved_token(c_code, 'return'):
-                token = self.__create_new_reserved_token(c_code, 'return')
+            reserved = self.__startswith_reserved(c_code)
+            if reserved:
+                token = self.__create_reserved_token(c_code, reserved)
                 tokens.append(token)
                 c_code = c_code[token.length:]
                 continue
 
             if c in Tokenizer.__var_name_head:
-                token = self.__create_new_varname_token(c_code)
+                token = self.__create_varname_token(c_code)
                 tokens.append(token)
                 c_code = c_code[token.length:]
                 continue
@@ -155,7 +174,7 @@ class Tokenizer:
             cc = c_code[: 2]
             for x in (cc, c):
                 if x in Tokenizer.__symbols:
-                    token = self.__create_new_token(TokenTypes.SYMBOL, c_code, len(x))
+                    token = self.__create_token(TokenTypes.SYMBOL, c_code, len(x))
                     tokens.append(token)
                     c_code = c_code[token.length:]
                     break
