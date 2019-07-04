@@ -106,7 +106,7 @@ class Parser:
             node = NodeFactory.create_return_node(self.__expr(tokens))
         else:
             node = self.__expr(tokens)
-        tokens.expect(';')
+        tokens.expect_symbol(';')
         return node
 
     def __expr(self, tokens):
@@ -120,7 +120,7 @@ class Parser:
         assign = equality ("=" assign)?
         '''
         node = self.__equality(tokens)
-        if tokens.consume('='):
+        if tokens.consume_symbol('='):
             node = NodeFactory.create_assign_node(node, self.__assign(tokens))
         return node
 
@@ -128,7 +128,7 @@ class Parser:
         node = next_func(tokens)
         while True:
             for k, v in map_.items():
-                token = tokens.consume(k)
+                token = tokens.consume_symbol(k)
                 if token:
                     node = NodeFactory.create_ope_node(v, node, next_func(tokens))
                     break
@@ -167,10 +167,10 @@ class Parser:
         '''
         unary = ("+" | "-")? term
         '''
-        token = tokens.consume('+')
+        token = tokens.consume_symbol('+')
         if token:
             return self.__term(tokens)
-        token = tokens.consume('-')
+        token = tokens.consume_symbol('-')
         if token:
             return NodeFactory.create_ope_node(NodeTypes.SUB, NodeFactory.create_num_node(0), self.__term(tokens))
         return self.__term(tokens)
@@ -179,10 +179,10 @@ class Parser:
         '''
         term = num | ident | "(" expr ")"
         '''
-        token = tokens.consume('(')
+        token = tokens.consume_symbol('(')
         if token:
             node = self.__expr(tokens)
-            tokens.expect(')')
+            tokens.expect_symbol(')')
             return node
         token = tokens.consume_ident()
         if token:
