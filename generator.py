@@ -126,6 +126,35 @@ class IfElseGenerator(NodeGenerator):
         output.append(f'.Lend{id(node)}:')
 
 
+class WhileGenerator(NodeGenerator):
+    def generate(self, node, output):
+        output.append(f'.Lbegin{id(node)}:')
+        node.expr.generate(output)
+        output.append(f'  pop rax')
+        output.append(f'  cmp rax, 0')
+        output.append(f'  je  .Lend{id(node)}')
+        node.stmt.generate(output)
+        output.append(f'  jmp .Lbegin{id(node)}')
+        output.append(f'.Lend{id(node)}:')
+
+
+class ForGenerator(NodeGenerator):
+    def generate(self, node, output):
+        if node.expr1:
+            node.expr1.generate(output)
+        output.append(f'.Lbegin{id(node)}:')
+        if node.expr2:
+            node.expr2.generate(output)
+        output.append(f'  pop rax')
+        output.append(f'  cmp rax, 0')
+        output.append(f'  je  .Lend{id(node)}')
+        node.stmt.generate(output)
+        if node.expr3:
+            node.expr3.generate(output)
+        output.append(f'  jmp .Lbegin{id(node)}')
+        output.append(f'.Lend{id(node)}:')
+
+
 class Generator:
     def __init__(self, nodes, c_code, varsize):
         self.__nodes = nodes
@@ -157,7 +186,7 @@ class Generator:
         result = []
         for node in nodes:
             node.generate(result)
-            # result.append('  pop rax')
+            result.append('  pop rax')
         return result
 
     def __gen_epilogue(self):

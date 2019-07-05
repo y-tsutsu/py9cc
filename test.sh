@@ -59,5 +59,9 @@ try 2 "x = 2; if (x == 1) x = x * 3; return x;"
 try 24 "x = 2; y = 0; z = 0; if (x == 2) y = x * 3; if (y > 0) z = y * 4; return z;"
 try 6 "x = 2; y = 0; if (x == 2) y = x * 3; else y = x * 4; return y;"
 try 8 "x = 2; y = 0; if (x == 1) y = x * 3; else y = x * 4; return y;"
+try 10 "x = 0; while (x != 10) x = x + 1; return x;"
+try 0 "x = 0; while (x != 0) x = x + 1; return x;"
+try 20 "x = 0; for (i = 0; i < 10; i = i + 1) x = x + 2; return x;"
+try 5 "x = 5; for (; i < 10; i = i + 1) x = x + 1; return x;"
 
 echo OK

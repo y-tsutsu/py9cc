@@ -1,8 +1,8 @@
 from enum import Enum, auto
 
-from generator import (AssignGenerator, IdentGenerator, IfElseGenerator,
-                       IfGenerator, NumGenerator, OperatorGenerator,
-                       ReturnGenerator)
+from generator import (AssignGenerator, ForGenerator, IdentGenerator,
+                       IfElseGenerator, IfGenerator, NumGenerator,
+                       OperatorGenerator, ReturnGenerator, WhileGenerator)
 
 
 class NodeTypes(Enum):
@@ -87,6 +87,22 @@ class NodeFactory:
         node.else_stmt = else_stmt
         return node
 
+    @classmethod
+    def create_while_node(self, expr, stmt):
+        node = Node(NodeTypes.WHILE, WhileGenerator())
+        node.expr = expr
+        node.stmt = stmt
+        return node
+
+    @classmethod
+    def create_for_node(self, expr1, expr2, expr3, stmt):
+        node = Node(NodeTypes.FOR, ForGenerator())
+        node.expr1 = expr1
+        node.expr2 = expr2
+        node.expr3 = expr3
+        node.stmt = stmt
+        return node
+
 
 class Parser:
     '''
@@ -141,9 +157,24 @@ class Parser:
             else:
                 node = NodeFactory.create_if_node(expr, stmt)
         elif tokens.consume_while():
-            pass
+            tokens.expect_symbol('(')
+            expr = self.__expr(tokens)
+            tokens.expect_symbol(')')
+            stmt = self.__stmt(tokens)
+            node = NodeFactory.create_while_node(expr, stmt)
         elif tokens.consume_for():
-            pass
+            tokens.expect_symbol('(')
+            expr1 = None if tokens.consume_symbol(';') else self.__expr(tokens)
+            if expr1:
+                tokens.expect_symbol(';')
+            expr2 = None if tokens.consume_symbol(';') else self.__expr(tokens)
+            if expr2:
+                tokens.expect_symbol(';')
+            expr3 = None if tokens.consume_symbol(')') else self.__expr(tokens)
+            if expr3:
+                tokens.expect_symbol(')')
+            stmt = self.__stmt(tokens)
+            node = NodeFactory.create_for_node(expr1, expr2, expr3, stmt)
         elif tokens.consume_return():
             node = NodeFactory.create_return_node(self.__expr(tokens))
             tokens.expect_symbol(';')
@@ -240,4 +271,4 @@ class Parser:
 
     @property
     def varsize(self):
-        return len(self.__varnames) * 8
+        return (len(self.__varnames) + 1) * 8
