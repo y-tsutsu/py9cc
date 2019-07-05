@@ -1,8 +1,9 @@
 from enum import Enum, auto
 
-from generator import (AssignGenerator, ForGenerator, IdentGenerator,
-                       IfElseGenerator, IfGenerator, NumGenerator,
-                       OperatorGenerator, ReturnGenerator, WhileGenerator)
+from generator import (AssignGenerator, BlockGenerator, ForGenerator,
+                       IdentGenerator, IfElseGenerator, IfGenerator,
+                       NumGenerator, OperatorGenerator, ReturnGenerator,
+                       WhileGenerator)
 
 
 class NodeTypes(Enum):
@@ -24,6 +25,7 @@ class NodeTypes(Enum):
     IF_ELSE = auto()
     WHILE = auto()
     FOR = auto()
+    BLOCK = auto()
 
 
 class Node:
@@ -103,15 +105,22 @@ class NodeFactory:
         node.stmt = stmt
         return node
 
+    @classmethod
+    def create_block_node(self, stmts):
+        node = Node(NodeTypes.BLOCK, BlockGenerator())
+        node.stmts = stmts
+        return node
+
 
 class Parser:
     '''
     program    = stmt*
-    stmt       = expr ";"
+    stmt       = "{" stmt* "}"
                | "if" "(" expr ")" stmt ("else" stmt)?
                | "while" "(" expr ")" stmt
                | "for" "(" expr? ";" expr? ";" expr? ")" stmt
                | "return" expr ";"
+               | expr ";"
     expr       = assign
     assign     = equality ("=" assign)?
     equality   = relational ("==" relational | "!=" relational)*
@@ -140,13 +149,19 @@ class Parser:
 
     def __stmt(self, tokens):
         '''
-        stmt = expr ";"
+        stmt = "{" stmt* "}"
              | "if" "(" expr ")" stmt ("else" stmt)?
              | "while" "(" expr ")" stmt
              | "for" "(" expr? ";" expr? ";" expr? ")" stmt
              | "return" expr ";"
+             | expr ";"
         '''
-        if tokens.consume_if():
+        if tokens.consume_symbol('{'):
+            stmts = []
+            while not tokens.consume_symbol('}'):
+                stmts.append(self.__stmt(tokens))
+            node = NodeFactory.create_block_node(stmts)
+        elif tokens.consume_if():
             tokens.expect_symbol('(')
             expr = self.__expr(tokens)
             tokens.expect_symbol(')')

@@ -155,6 +155,13 @@ class ForGenerator(NodeGenerator):
         output.append(f'.Lend{id(node)}:')
 
 
+class BlockGenerator(NodeGenerator):
+    def generate(self, node, output):
+        for stmt in node.stmts:
+            stmt.generate(output)
+            output.append('  pop rax')
+
+
 class Generator:
     def __init__(self, nodes, c_code, varsize):
         self.__nodes = nodes

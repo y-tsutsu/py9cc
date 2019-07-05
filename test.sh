@@ -63,5 +63,6 @@ try 10 "x = 0; while (x != 10) x = x + 1; return x;"
 try 0 "x = 0; while (x != 0) x = x + 1; return x;"
 try 20 "x = 0; for (i = 0; i < 10; i = i + 1) x = x + 2; return x;"
 try 5 "x = 5; for (; i < 10; i = i + 1) x = x + 1; return x;"
+try 55 "x = 0; y = 10; for (i = 0; i < 5; i = i + 1) { x = x + 1; y = y + 1; } return 2 * x + 3 * y;"
 
 echo OK
