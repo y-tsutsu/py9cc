@@ -3,6 +3,8 @@ try() {
     expected="$1"
     input="$2"
 
+    gcc -c sample.c
+
     python py9cc.py "$input" > tmp.s
 
     if [ "$?" != "0" ]; then
@@ -10,7 +12,7 @@ try() {
         exit 1
     fi
 
-    gcc -o tmp tmp.s
+    gcc -o tmp tmp.s sample.o
     ./tmp
     actual="$?"
 
@@ -21,7 +23,7 @@ try() {
         exit 1
     fi
 
-    rm tmp.s tmp
+    rm tmp.s tmp sample.o
 }
 
 try 0 "return 0;"
@@ -52,7 +54,7 @@ try 1 "return 43>42;"
 try 0 "return 42>42;"
 try 0 "return 41>42;"
 try 14 "a = 3; b = 5 * 6 - 8; return a + b / 2;"
-try 6 "foo = 1; bar = 2 + 3; return foo + bar;"
+try 6 "Foo = 1; Bar = 2 + 3; return Foo + Bar;"
 try 130 "hoge = 42; piyo = hoge + 23; fuga = piyo * 2; return fuga;"
 try 6 "x = 2; if (x == 2) x = x * 3; return x;"
 try 2 "x = 2; if (x == 1) x = x * 3; return x;"
@@ -64,5 +66,6 @@ try 0 "x = 0; while (x != 0) x = x + 1; return x;"
 try 20 "x = 0; for (i = 0; i < 10; i = i + 1) x = x + 2; return x;"
 try 5 "x = 5; for (; i < 10; i = i + 1) x = x + 1; return x;"
 try 55 "x = 0; y = 10; for (i = 0; i < 5; i = i + 1) { x = x + 1; y = y + 1; } return 2 * x + 3 * y;"
+try 42 "x = 42; MyPrint(); return x;"
 
 echo OK

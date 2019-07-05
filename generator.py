@@ -162,6 +162,20 @@ class BlockGenerator(NodeGenerator):
             output.append('  pop rax')
 
 
+class FunctionGenerator(NodeGenerator):
+    def generate(self, node, output):
+        output.append(f'  push  r15')
+        output.append(f'  xor   r15,r15')
+        output.append(f'  test  rsp,0xf')
+        output.append(f'  setnz r15b')
+        output.append(f'  shl   r15,3')
+        output.append(f'  sub   rsp, r15')
+        output.append(f'  call  {node.name}')
+        output.append(f'  add   rsp,r15')
+        output.append(f'  pop   r15')
+        output.append(f'  push  rax')
+
+
 class Generator:
     def __init__(self, nodes, c_code, varsize):
         self.__nodes = nodes
@@ -192,8 +206,14 @@ class Generator:
     def __gen_from_nodes(self, nodes):
         result = []
         for node in nodes:
-            node.generate(result)
-            result.append('  pop rax')
+            output = []
+            node.generate(output)
+            push_count = len([x.lstrip().startswith('push') for x in output])
+            pop_count = len([x.lstrip().startswith('pop') for x in output])
+            if pop_count < push_count:
+                for _ in range(push_count - pop_count):
+                    output.append('  pop rax')
+            result += output
         return result
 
     def __gen_epilogue(self):

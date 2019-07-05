@@ -1,9 +1,9 @@
 from enum import Enum, auto
 
 from generator import (AssignGenerator, BlockGenerator, ForGenerator,
-                       IdentGenerator, IfElseGenerator, IfGenerator,
-                       NumGenerator, OperatorGenerator, ReturnGenerator,
-                       WhileGenerator)
+                       FunctionGenerator, IdentGenerator, IfElseGenerator,
+                       IfGenerator, NumGenerator, OperatorGenerator,
+                       ReturnGenerator, WhileGenerator)
 
 
 class NodeTypes(Enum):
@@ -26,6 +26,7 @@ class NodeTypes(Enum):
     WHILE = auto()
     FOR = auto()
     BLOCK = auto()
+    FUNCTION = auto()
 
 
 class Node:
@@ -111,6 +112,12 @@ class NodeFactory:
         node.stmts = stmts
         return node
 
+    @classmethod
+    def create_function_node(self, name):
+        node = Node(NodeTypes.FUNCTION, FunctionGenerator())
+        node.name = name
+        return node
+
 
 class Parser:
     '''
@@ -128,7 +135,7 @@ class Parser:
     add        = mul ("+" mul | "-" mul)*
     mul        = unary ("*" unary | "/" unary)*
     unary      = ("+" | "-")? term
-    term       = num | ident | "(" expr ")"
+    term       = num | ident ("(" ")")? | "(" expr ")"
     '''
 
     def __init__(self, tokens):
@@ -266,19 +273,25 @@ class Parser:
 
     def __term(self, tokens):
         '''
-        term = num | ident | "(" expr ")"
+        term = num | ident ("(" ")")? | "(" expr ")"
         '''
         token = tokens.consume_symbol('(')
         if token:
             node = self.__expr(tokens)
             tokens.expect_symbol(')')
             return node
+
         token = tokens.consume_ident()
         if token:
             name = token.code[:token.length]
-            offset = self.__get_offset_from_varname(name)
-            node = NodeFactory.create_ident_node(offset)
+            if tokens.consume_symbol('('):
+                node = NodeFactory.create_function_node(name)
+                tokens.expect_symbol(')')
+            else:
+                offset = self.__get_offset_from_varname(name)
+                node = NodeFactory.create_ident_node(offset)
             return node
+
         token_num = tokens.expect_num()
         return NodeFactory.create_num_node(token_num.value)
 
@@ -290,4 +303,5 @@ class Parser:
 
     @property
     def varsize(self):
-        return (len(self.__varnames) + 1) * 8
+        count = len(self.__varnames)
+        return count * 8
