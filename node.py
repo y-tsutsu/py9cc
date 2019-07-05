@@ -261,13 +261,17 @@ class Parser:
         token = tokens.consume_ident()
         if token:
             name = token.code[:token.length]
-            if name not in self.__varnames:
-                self.__varnames.append(name)
-            offset = (self.__varnames.index(name) + 1) * 8
+            offset = self.__get_offset_from_varname(name)
             node = NodeFactory.create_ident_node(offset)
             return node
         token_num = tokens.expect_num()
         return NodeFactory.create_num_node(token_num.value)
+
+    def __get_offset_from_varname(self, name):
+        if name not in self.__varnames:
+            self.__varnames.append(name)
+        offset = (self.__varnames.index(name) + 1) * 8
+        return offset
 
     @property
     def varsize(self):
