@@ -113,9 +113,10 @@ class NodeFactory:
         return node
 
     @classmethod
-    def create_function_node(self, name):
+    def create_function_node(self, name, args):
         node = Node(NodeTypes.FUNCTION, FunctionGenerator())
         node.name = name
+        node.args = args
         return node
 
 
@@ -135,7 +136,7 @@ class Parser:
     add        = mul ("+" mul | "-" mul)*
     mul        = unary ("*" unary | "/" unary)*
     unary      = ("+" | "-")? term
-    term       = num | ident ("(" ")")? | "(" expr ")"
+    term       = "(" expr ")" | ident ("(" expr* ")")? | num
     '''
 
     def __init__(self, tokens):
@@ -273,7 +274,7 @@ class Parser:
 
     def __term(self, tokens):
         '''
-        term = num | ident ("(" ")")? | "(" expr ")"
+        term = "(" expr ")"| ident ("(" ident* ")")? | num
         '''
         token = tokens.consume_symbol('(')
         if token:
@@ -285,8 +286,13 @@ class Parser:
         if token:
             name = token.code[:token.length]
             if tokens.consume_symbol('('):
-                node = NodeFactory.create_function_node(name)
-                tokens.expect_symbol(')')
+                args = []
+                while not tokens.consume_symbol(')'):
+                    args.append(self.__expr(tokens))
+                    if not tokens.consume_symbol(','):
+                        tokens.expect_symbol(')')
+                        break
+                node = NodeFactory.create_function_node(name, args)
             else:
                 offset = self.__get_offset_from_varname(name)
                 node = NodeFactory.create_ident_node(offset)

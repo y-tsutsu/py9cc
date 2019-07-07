@@ -88,7 +88,7 @@ class TokenResult:
 
 
 class Tokenizer:
-    __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=', '{', '}')
+    __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=', '{', '}', ',')
     __reserved_map = {'return': TokenTypes.RETURN, 'if': TokenTypes.IF, 'else': TokenTypes.ELSE, 'while': TokenTypes.WHILE, 'for': TokenTypes.FOR}
     __var_name_head = ascii_letters + '_'
     __var_name = digits + __var_name_head

@@ -163,7 +163,16 @@ class BlockGenerator(NodeGenerator):
 
 
 class FunctionGenerator(NodeGenerator):
+    REG_ARGS = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9']
+
     def generate(self, node, output):
+        if len(FunctionGenerator.REG_ARGS) < len(node.args):
+            error(f'引数が多すぎます {node.args}')
+
+        for arg, reg in zip(node.args, FunctionGenerator.REG_ARGS):
+            arg.generate(output)
+            output.append(f'  pop {reg}')
+
         output.append(f'  push  r15')
         output.append(f'  xor   r15,r15')
         output.append(f'  test  rsp,0xf')
