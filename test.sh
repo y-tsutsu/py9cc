@@ -70,4 +70,6 @@ try 42 "x = 42; MyPrint(); return x;"
 try 21 "v1 = 1; v2 = 2; v3 = 3; v4 = 4; v5 = 5; v6 = 6; ans = MyAdd(v1, v2, v3, v4, v5, v6); return ans;"
 try 4 "v1 = 8; v2 = 2; ans = MyDiv(v1, v2); return ans;"
 
+# try 0 "for (i = 0; ;) { MyPrint(); } return 0;"
+
 echo OK

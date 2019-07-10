@@ -143,8 +143,7 @@ class ForGenerator(NodeGenerator):
         if node.expr1:
             node.expr1.generate(output)
         output.append(f'.Lbegin{id(node)}:')
-        if node.expr2:
-            node.expr2.generate(output)
+        node.expr2.generate(output)
         output.append(f'  pop rax')
         output.append(f'  cmp rax, 0')
         output.append(f'  je  .Lend{id(node)}')

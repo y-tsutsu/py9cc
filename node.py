@@ -119,6 +119,10 @@ class NodeFactory:
         node.args = args
         return node
 
+    @classmethod
+    def create_for_infinite_dummy_node(self):
+        return NodeFactory.create_num_node(1)
+
 
 class Parser:
     '''
@@ -193,6 +197,8 @@ class Parser:
             expr2 = None if tokens.consume_symbol(';') else self.__expr(tokens)
             if expr2:
                 tokens.expect_symbol(';')
+            else:
+                expr2 = NodeFactory.create_for_infinite_dummy_node()
             expr3 = None if tokens.consume_symbol(')') else self.__expr(tokens)
             if expr3:
                 tokens.expect_symbol(')')
