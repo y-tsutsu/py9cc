@@ -17,8 +17,8 @@ class NodeGenerator(metaclass=ABCMeta):
         output.append(f'  sub rax, {node.offset}')
         output.append(f'  push rax')
 
-    @classmethod
-    def append_missing_pop(self, output):
+    @staticmethod
+    def append_missing_pop(output):
         push_count = len([x for x in output if x.lstrip().startswith('push')])
         pop_count = len([x for x in output if x.lstrip().startswith('pop')])
         if (push_count - pop_count) == 1:

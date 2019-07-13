@@ -43,62 +43,62 @@ class Node:
 
 
 class NodeFactory:
-    @classmethod
-    def create_num_node(self, value):
+    @staticmethod
+    def create_num_node(value):
         node = Node(NodeTypes.NUM, NumGenerator())
         node.value = value
         return node
 
-    @classmethod
-    def create_ope_node(self, n_type, left, right):
+    @staticmethod
+    def create_ope_node(n_type, left, right):
         node = Node(n_type, OperatorGenerator())
         node.left = left
         node.right = right
         return node
 
-    @classmethod
-    def create_assign_node(self, left, right):
+    @staticmethod
+    def create_assign_node(left, right):
         node = Node(NodeTypes.ASSIGN, AssignGenerator())
         node.left = left
         node.right = right
         return node
 
-    @classmethod
-    def create_ident_node(self, offset):
+    @staticmethod
+    def create_ident_node(offset):
         node = Node(NodeTypes.IDENT, IdentGenerator())
         node.offset = offset
         return node
 
-    @classmethod
-    def create_return_node(self, child):
+    @staticmethod
+    def create_return_node(child):
         node = Node(NodeTypes.RETURN, ReturnGenerator())
         node.child = child
         return node
 
-    @classmethod
-    def create_if_node(self, expr, stmt):
+    @staticmethod
+    def create_if_node(expr, stmt):
         node = Node(NodeTypes.IF, IfGenerator())
         node.expr = expr
         node.stmt = stmt
         return node
 
-    @classmethod
-    def create_if_else_node(self, expr, stmt, else_stmt):
+    @staticmethod
+    def create_if_else_node(expr, stmt, else_stmt):
         node = Node(NodeTypes.IF_ELSE, IfElseGenerator())
         node.expr = expr
         node.stmt = stmt
         node.else_stmt = else_stmt
         return node
 
-    @classmethod
-    def create_while_node(self, expr, stmt):
+    @staticmethod
+    def create_while_node(expr, stmt):
         node = Node(NodeTypes.WHILE, WhileGenerator())
         node.expr = expr
         node.stmt = stmt
         return node
 
-    @classmethod
-    def create_for_node(self, expr1, expr2, expr3, stmt):
+    @staticmethod
+    def create_for_node(expr1, expr2, expr3, stmt):
         node = Node(NodeTypes.FOR, ForGenerator())
         node.expr1 = expr1
         node.expr2 = expr2
@@ -106,21 +106,21 @@ class NodeFactory:
         node.stmt = stmt
         return node
 
-    @classmethod
-    def create_block_node(self, stmts):
+    @staticmethod
+    def create_block_node(stmts):
         node = Node(NodeTypes.BLOCK, BlockGenerator())
         node.stmts = stmts
         return node
 
-    @classmethod
-    def create_function_node(self, name, args):
+    @staticmethod
+    def create_function_node(name, args):
         node = Node(NodeTypes.FUNCTION, FunctionGenerator())
         node.name = name
         node.args = args
         return node
 
-    @classmethod
-    def create_for_infinite_dummy_node(self):
+    @staticmethod
+    def create_for_infinite_dummy_node():
         return NodeFactory.create_num_node(1)
 
 
