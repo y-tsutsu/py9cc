@@ -45,13 +45,15 @@ class Parser:
         '''
         funcname = tcontext.expect_ident().name
         tcontext.expect_symbol('(')
-        args = []
-        while True:
-            arg_token = tcontext.consume_ident()
-            if not arg_token:
+        arg_offsets = []
+        while not tcontext.consume_symbol(')'):
+            arg_token = tcontext.expect_ident()
+            offset = self.__get_offset_from_varname(arg_token.name, funcname)
+            arg_offsets.append(offset)
+            if not tcontext.consume_symbol(','):
+                tcontext.expect_symbol(')')
                 break
-            args.append(arg_token.name)
-        tcontext.expect_symbol(')')
+
         tcontext.expect_symbol('{')
         stmts = []
         while not tcontext.consume_symbol('}'):
@@ -59,7 +61,7 @@ class Parser:
                 error('関数の"}"がありません')
             stmts.append(self.__stmt(tcontext, funcname))
         block = NodeFactory.create_block_node(stmts)
-        return NodeFactory.create_func_node(funcname, args, block)
+        return NodeFactory.create_func_node(funcname, arg_offsets, block)
 
     def __stmt(self, tcontext, funcname):
         '''
@@ -184,7 +186,7 @@ class Parser:
 
     def __term(self, tcontext, funcname):
         '''
-        term = "(" expr ")"| ident ("(" ident* ")")? | num
+        term = "(" expr ")"| ident ("(" expr* ")")? | num
         '''
         token = tcontext.consume_symbol('(')
         if token:

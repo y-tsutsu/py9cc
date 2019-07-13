@@ -125,10 +125,10 @@ class NodeFactory:
         return NodeFactory.create_num_node(1)
 
     @staticmethod
-    def create_func_node(name, args, block):
+    def create_func_node(name, arg_offsets, block):
         node = Node(NodeTypes.FUNC, FuncGenerator())
         node.name = name
-        node.args = args
+        node.arg_offsets = arg_offsets
         node.block = block
         return node
 

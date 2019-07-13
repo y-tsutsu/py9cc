@@ -4,6 +4,8 @@ from utility import error
 
 
 class NodeGenerator(metaclass=ABCMeta):
+    REG_ARGS = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9']
+
     @abstractmethod
     def generate(self, node):
         pass
@@ -180,10 +182,8 @@ class BlockGenerator(NodeGenerator):
 
 
 class CallGenerator(NodeGenerator):
-    REG_ARGS = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9']
-
     def generate(self, node, output):
-        if len(CallGenerator.REG_ARGS) < len(node.args):
+        if len(NodeGenerator.REG_ARGS) < len(node.args):
             error(f'引数が多すぎます {node.args}')
 
         for arg, reg in zip(node.args, CallGenerator.REG_ARGS):
@@ -204,11 +204,19 @@ class CallGenerator(NodeGenerator):
 
 class FuncGenerator(NodeGenerator):
     def generate(self, node, output):
+        if len(NodeGenerator.REG_ARGS) < len(node.arg_offsets):
+            error(f'引数が多すぎます {node.args}')
+
         output.append(f'{node.name}:')
 
         output.append(f'  push rbp')
         output.append(f'  mov rbp, rsp')
         output.append(f'  sub rsp, {node.varsize}')
+
+        for offset, reg in zip(node.arg_offsets, CallGenerator.REG_ARGS):
+            output.append(f'  mov rax, rbp')
+            output.append(f'  sub rax, {offset}')
+            output.append(f'  mov [rax], {reg}')
 
         node.block.generate(output)
 
