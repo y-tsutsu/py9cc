@@ -20,6 +20,7 @@ try() {
         echo "$input => $actual"
     else
         echo "$input => $expected expected, but got $actual"
+        echo "NG"
         exit 1
     fi
 
@@ -69,7 +70,14 @@ try 55 "x = 0; y = 10; for (i = 0; i < 5; i = i + 1) { x = x + 1; y = y + 1; } r
 try 42 "x = 42; MyPrint(); return x;"
 try 21 "v1 = 1; v2 = 2; v3 = 3; v4 = 4; v5 = 5; v6 = 6; ans = MyAdd(v1, v2, v3, v4, v5, v6); return ans;"
 try 4 "v1 = 8; v2 = 2; ans = MyDiv(v1, v2); return ans;"
+try 0 "x = 50000000; for (i = 0; i < 50000000; i = i + 1) x = x - 1; return x;"
+try 0 "x = 50000000; for (i = 50000000; i > 0; i = i - 1) x = x - 1; return x;"
+try 0 "x = 50000000; while (x > 0) x = x - 1; return x;"
+try 0 "x = 50000000; for (i = 0; i < 50000000; i = i + 1) { x = x - 2; x = x + 1; } return x;"
+try 0 "x = 50000000; for (i = 50000000; i > 0; i = i - 1) { x = x - 2; x = x + 1; } return x;"
+try 0 "x = 50000000; while (x > 0) { x = x - 2; x = x + 1; } return x;"
+try 255 "x = 50000000; while (x > 0) { x = x - 1; if (x == 255) { return x; } } return x;"
 
 # try 0 "for (i = 0; ;) { MyPrint(); } return 0;"
 
-echo OK
+echo "OK"
