@@ -10,7 +10,7 @@ class Parser:
                | "if" "(" expr ")" stmt ("else" stmt)?
                | "while" "(" expr ")" stmt
                | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-               | "return" expr ";"
+               | "return" expr? ";"
                | expr ";"
     expr       = assign
     assign     = equality ("=" assign)?
@@ -69,7 +69,7 @@ class Parser:
              | "if" "(" expr ")" stmt ("else" stmt)?
              | "while" "(" expr ")" stmt
              | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-             | "return" expr ";"
+             | "return" expr? ";"
              | expr ";"
         '''
         if tcontext.consume_symbol('{'):
@@ -111,8 +111,12 @@ class Parser:
             stmt = self.__stmt(tcontext, funcname)
             node = NodeFactory.create_for_node(expr1, expr2, expr3, stmt)
         elif tcontext.consume_return():
-            node = NodeFactory.create_return_node(self.__expr(tcontext, funcname))
-            tcontext.expect_symbol(';')
+            if tcontext.consume_symbol(';'):
+                expr = None
+            else:
+                expr = self.__expr(tcontext, funcname)
+                tcontext.expect_symbol(';')
+            node = NodeFactory.create_return_node(expr)
         else:
             node = self.__expr(tcontext, funcname)
             tcontext.expect_symbol(';')

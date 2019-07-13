@@ -109,8 +109,9 @@ class IdentGenerator(NodeGenerator):
 
 class ReturnGenerator(NodeGenerator):
     def generate(self, node, output):
-        node.expr.generate(output)
-        output.append('  pop rax')
+        if node.expr:
+            node.expr.generate(output)
+            output.append('  pop rax')
         output.append('  mov rsp, rbp')
         output.append('  pop rbp')
         output.append('  ret')
@@ -220,9 +221,10 @@ class FuncGenerator(NodeGenerator):
 
         node.block.generate(output)
 
-        output.append(f'  mov rsp, rbp')
-        output.append(f'  pop rbp')
-        output.append(f'  ret')
+        if not output[-1].lstrip().startswith('ret'):
+            output.append(f'  mov rsp, rbp')
+            output.append(f'  pop rbp')
+            output.append(f'  ret')
 
 
 class Generator:
