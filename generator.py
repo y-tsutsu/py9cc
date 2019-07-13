@@ -21,9 +21,9 @@ class NodeGenerator(metaclass=ABCMeta):
     def append_missing_pop(output):
         push_count = len([x for x in output if x.lstrip().startswith('push')])
         pop_count = len([x for x in output if x.lstrip().startswith('pop')])
-        if (push_count - pop_count) == 1:
+        if (push_count - pop_count) == 2:
             output.append('  pop rax')
-        elif (push_count - pop_count) > 2:
+        elif (push_count - pop_count) > 3:
             error(f'pushが多すぎます push: {push_count} pop: {pop_count}')
         else:
             pass
@@ -107,7 +107,7 @@ class IdentGenerator(NodeGenerator):
 
 class ReturnGenerator(NodeGenerator):
     def generate(self, node, output):
-        node.child.generate(output)
+        node.expr.generate(output)
         output.append('  pop rax')
         output.append('  mov rsp, rbp')
         output.append('  pop rbp')
@@ -179,14 +179,14 @@ class BlockGenerator(NodeGenerator):
             NodeGenerator.append_missing_pop(output)
 
 
-class FunctionGenerator(NodeGenerator):
+class CallGenerator(NodeGenerator):
     REG_ARGS = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9']
 
     def generate(self, node, output):
-        if len(FunctionGenerator.REG_ARGS) < len(node.args):
+        if len(CallGenerator.REG_ARGS) < len(node.args):
             error(f'引数が多すぎます {node.args}')
 
-        for arg, reg in zip(node.args, FunctionGenerator.REG_ARGS):
+        for arg, reg in zip(node.args, CallGenerator.REG_ARGS):
             arg.generate(output)
             output.append(f'  pop {reg}')
 
@@ -202,45 +202,41 @@ class FunctionGenerator(NodeGenerator):
         output.append(f'  push  rax')
 
 
+class FuncGenerator(NodeGenerator):
+    def generate(self, node, output):
+        output.append(f'{node.name}:')
+
+        output.append(f'  push rbp')
+        output.append(f'  mov rbp, rsp')
+        output.append(f'  sub rsp, {node.varsize}')
+
+        node.block.generate(output)
+
+        output.append(f'  mov rsp, rbp')
+        output.append(f'  pop rbp')
+        output.append(f'  ret')
+
+
 class Generator:
-    def __init__(self, nodes, c_code, varsize):
-        self.__nodes = nodes
-        self.__c_code = c_code
-        self.__varsize = varsize
+    def __init__(self, node_context):
+        self.__ncontext = node_context
 
     def generate(self):
         gen1 = self.__gen_pre()
-        gen2 = self.__gen_prologue(self.__varsize)
-        gen3 = self.__gen_from_nodes(self.__nodes)
-        gen4 = self.__gen_epilogue()
-        return gen1 + gen2 + gen3 + gen4
+        gen2 = self.__gen_from_nodes(self.__ncontext)
+        return gen1 + gen2
 
     def __gen_pre(self):
         result = []
         result.append('.intel_syntax noprefix')
         result.append('.global main')
-        result.append('main:')
         return result
 
-    def __gen_prologue(self, varsize):
+    def __gen_from_nodes(self, ncontext):
         result = []
-        result.append(f'  push rbp')
-        result.append(f'  mov rbp, rsp')
-        result.append(f'  sub rsp, {varsize}')
-        return result
-
-    def __gen_from_nodes(self, nodes):
-        result = []
-        for node in nodes:
+        for node in ncontext.nodes:
             output = []
             node.generate(output)
             NodeGenerator.append_missing_pop(output)
             result += output
-        return result
-
-    def __gen_epilogue(self):
-        result = []
-        result.append('  mov rsp, rbp')
-        result.append('  pop rbp')
-        result.append('  ret')
         return result

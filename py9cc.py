@@ -13,12 +13,12 @@ def main():
     c_code = argv[1]
 
     tokenizer = Tokenizer(c_code)
-    tokens = tokenizer.tokenize()
+    tcontext = tokenizer.tokenize()
 
-    parser = Parser(tokens)
-    nodes = parser.parse()
+    parser = Parser(tcontext)
+    ncontext = parser.parse()
 
-    generator = Generator(nodes, c_code, parser.varsize)
+    generator = Generator(ncontext)
     assembly = generator.generate()
 
     for x in assembly:

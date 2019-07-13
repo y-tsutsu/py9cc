@@ -23,8 +23,12 @@ class Token:
         self.code = None
         self.length = None
 
+    @property
+    def name(self):
+        return self.code[:self.length]
 
-class TokenResult:
+
+class TokenContext:
     def __init__(self, tokens, c_code):
         self.__tokens = deque(tokens)
         self.__c_code = c_code
@@ -75,6 +79,15 @@ class TokenResult:
                 error_at(self.__c_code, self.__tokens[0].code, '数ではありません')
             else:
                 error('数がありません')
+        return token
+
+    def expect_ident(self):
+        token = self.consume_ident()
+        if not token:
+            if self.__tokens:
+                error_at(self.__c_code, self.__tokens[0].code, '変数，関数ではありません')
+            else:
+                error('変数，関数がありません')
         return token
 
     def expect_symbol(self, symbol):
@@ -181,4 +194,4 @@ class Tokenizer:
             else:
                 error_at(self.__c_code, c_code, 'トークナイズできません')
 
-        return TokenResult(tokens, self.__c_code)
+        return TokenContext(tokens, self.__c_code)
