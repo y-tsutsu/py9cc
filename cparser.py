@@ -5,7 +5,7 @@ from utility import error
 class Parser:
     '''
     program    = func*
-    func       = ident "(" ident* ")" "{" stm* "}"
+    func       = "int" ident "(" ("int" ident)* ")" "{" stm* "}"
     stmt       = "{" stmt* "}"
                | "if" "(" expr ")" stmt ("else" stmt)?
                | "while" "(" expr ")" stmt
@@ -41,12 +41,14 @@ class Parser:
 
     def __func(self, tcontext):
         '''
-        func = ident "(" ident* ")" "{" stmt* "}"
+        func = "int" ident "(" ("int" ident)* ")" "{" stmt* "}"
         '''
+        tcontext.expect_type()
         funcname = tcontext.expect_ident().text
         tcontext.expect_symbol('(')
         arg_offsets = []
         while not tcontext.consume_symbol(')'):
+            tcontext.expect_type()
             arg_token = tcontext.expect_ident()
             offset = self.__get_offset_from_varname(arg_token.text, funcname)
             arg_offsets.append(offset)

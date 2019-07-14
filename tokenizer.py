@@ -14,6 +14,7 @@ class TokenTypes(Enum):
     FOR = auto()
     IDENT = auto()
     NUM = auto()
+    TYPE = auto()
 
 
 class Token:
@@ -76,6 +77,9 @@ class TokenContext:
                 return token
         return None
 
+    def consume_type(self):
+        return self.__consume_inner(TokenTypes.TYPE)
+
     def expect_num(self):
         token = self.consume_num()
         if not token:
@@ -103,10 +107,20 @@ class TokenContext:
                 error(f'{symbol}がありません')
         return token
 
+    def expect_type(self):
+        token = self.consume_type()
+        if not token:
+            if self.__tokens:
+                error_at(self.__c_code, self.__tokens[0].code, '型ではありません')
+            else:
+                error(f'型ではありません')
+        return token
+
 
 class Tokenizer:
     __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=', '{', '}', ',', '&')
-    __reserved_map = {'return': TokenTypes.RETURN, 'if': TokenTypes.IF, 'else': TokenTypes.ELSE, 'while': TokenTypes.WHILE, 'for': TokenTypes.FOR}
+    __reserved_map = {'return': TokenTypes.RETURN, 'if': TokenTypes.IF, 'else': TokenTypes.ELSE, 'while': TokenTypes.WHILE, 'for': TokenTypes.FOR,
+                      'int': TokenTypes.TYPE}
     __var_name_head = ascii_letters + '_'
     __var_name = digits + __var_name_head
 
