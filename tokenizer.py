@@ -24,7 +24,7 @@ class Token:
         self.length = None
 
     @property
-    def name(self):
+    def text(self):
         return self.code[:self.length]
 
 
@@ -32,6 +32,10 @@ class TokenContext:
     def __init__(self, tokens, c_code):
         self.__tokens = deque(tokens)
         self.__c_code = c_code
+
+    @property
+    def current(self):
+        return None if self.is_empty() else self.__tokens[0]
 
     def is_empty(self):
         return len(self.__tokens) == 0
@@ -101,7 +105,7 @@ class TokenContext:
 
 
 class Tokenizer:
-    __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=', '{', '}', ',')
+    __symbols = ('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/', '(', ')', ';', '=', '{', '}', ',', '&')
     __reserved_map = {'return': TokenTypes.RETURN, 'if': TokenTypes.IF, 'else': TokenTypes.ELSE, 'while': TokenTypes.WHILE, 'for': TokenTypes.FOR}
     __var_name_head = ascii_letters + '_'
     __var_name = digits + __var_name_head

@@ -1,9 +1,10 @@
 from enum import Enum, auto
 
-from generator import (AssignGenerator, BlockGenerator, CallGenerator,
-                       ForGenerator, FuncGenerator, IdentGenerator,
-                       IfElseGenerator, IfGenerator, NumGenerator,
-                       OperatorGenerator, ReturnGenerator, WhileGenerator)
+from generator import (AddressGenerator, AssignGenerator, BlockGenerator,
+                       CallGenerator, DereferenceGenerator, ForGenerator,
+                       FuncGenerator, IdentGenerator, IfElseGenerator,
+                       IfGenerator, NumGenerator, OperatorGenerator,
+                       ReturnGenerator, WhileGenerator)
 
 
 class NodeTypes(Enum):
@@ -28,6 +29,8 @@ class NodeTypes(Enum):
     BLOCK = auto()
     CALL = auto()
     FUNC = auto()
+    ADDR = auto()
+    DEREF = auto()
 
 
 class Node:
@@ -130,6 +133,18 @@ class NodeFactory:
         node.name = name
         node.arg_offsets = arg_offsets
         node.block = block
+        return node
+
+    @staticmethod
+    def create_address_node(unary):
+        node = Node(NodeTypes.ADDR, AddressGenerator())
+        node.unary = unary
+        return node
+
+    @staticmethod
+    def create_dereference_node(unary):
+        node = Node(NodeTypes.DEREF, DereferenceGenerator())
+        node.unary = unary
         return node
 
 

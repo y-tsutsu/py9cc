@@ -13,6 +13,12 @@ try() {
     fi
 
     gcc -o tmp tmp.s sample.o
+
+    if [ "$?" != "0" ]; then
+        echo "gcc compile error"
+        exit 1
+    fi
+
     ./tmp
     actual="$?"
 
@@ -80,6 +86,8 @@ try 255 "main() { x = 50000000; while (x > 0) { x = x - 1; if (x == 255) { retur
 try 21 "my_add(v1, v2, v3, v4, v5, v6) { ans = v1 + v2 + v3 + v4 + v5 + v6; return ans; } main() { x1 = 1; x2 = 2; x3 = 3; x4 = 4; x5 = 5; x6 = 6; ans = my_add(x1, x2, x3, x4, x5, x6); return ans; }"
 try 4 "my_div(v1, v2) { ans = v1 / v2; return ans; } main() { v1 = 8; v2 = 2; ans = my_div(v1, v2); return ans; }"
 try 0 "fib_(max, left, right) { if (max < left) { return; } MyPrintNum(left); tmp = left; left = right; right = tmp + right; fib_(max, left, right); } fib(max) { fib_(max, 0, 1); } main() { fib(1000); return 0; }"
+try 3 "main() { x = 3; y = &x; return *y; }"
+try 3 "main() { x = 3; y = 5; z = &y + 8; return *z; }"
 
 # try 0 "main() { for (i = 0; ;) { MyPrint(); } return 0; }"
 

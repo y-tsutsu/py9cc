@@ -227,6 +227,19 @@ class FuncGenerator(NodeGenerator):
             output.append(f'  ret')
 
 
+class AddressGenerator(NodeGenerator):
+    def generate(self, node, output):
+        self._gen_lval(node.unary, output)
+
+
+class DereferenceGenerator(NodeGenerator):
+    def generate(self, node, output):
+        node.unary.generate(output)
+        output.append('  pop rax')
+        output.append('  mov rax, [rax]')
+        output.append('  push rax')
+
+
 class Generator:
     def __init__(self, node_context):
         self.__ncontext = node_context

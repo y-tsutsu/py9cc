@@ -18,7 +18,7 @@ class Parser:
     relational = add ("<" add | "<=" add | ">" add | ">=" add)*
     add        = mul ("+" mul | "-" mul)*
     mul        = unary ("*" unary | "/" unary)*
-    unary      = ("+" | "-")? term
+    unary      = ("*" | "&") unary | ("+" | "-")? term
     term       = "(" expr ")" | ident ("(" expr* ")")? | num
     '''
 
@@ -43,25 +43,21 @@ class Parser:
         '''
         func = ident "(" ident* ")" "{" stmt* "}"
         '''
-        funcname = tcontext.expect_ident().name
+        funcname = tcontext.expect_ident().text
         tcontext.expect_symbol('(')
         arg_offsets = []
         while not tcontext.consume_symbol(')'):
             arg_token = tcontext.expect_ident()
-            offset = self.__get_offset_from_varname(arg_token.name, funcname)
+            offset = self.__get_offset_from_varname(arg_token.text, funcname)
             arg_offsets.append(offset)
             if not tcontext.consume_symbol(','):
                 tcontext.expect_symbol(')')
                 break
 
-        tcontext.expect_symbol('{')
-        stmts = []
-        while not tcontext.consume_symbol('}'):
-            if tcontext.is_empty():
-                error('関数の"}"がありません')
-            stmts.append(self.__stmt(tcontext, funcname))
-        block = NodeFactory.create_block_node(stmts)
-        return NodeFactory.create_func_node(funcname, arg_offsets, block)
+        if tcontext.current.text != '{':
+            error('関数の"{"がありません')
+
+        return NodeFactory.create_func_node(funcname, arg_offsets, self.__stmt(tcontext, funcname))
 
     def __stmt(self, tcontext, funcname):
         '''
@@ -178,14 +174,24 @@ class Parser:
 
     def __unary(self, tcontext, funcname):
         '''
-        unary = ("+" | "-")? term
+        unary = ("&" | "*") unary | ("+" | "-")? term
         '''
+        token = tcontext.consume_symbol('&')
+        if token:
+            return NodeFactory.create_address_node(self.__unary(tcontext, funcname))
+
+        token = tcontext.consume_symbol('*')
+        if token:
+            return NodeFactory.create_dereference_node(self.__unary(tcontext, funcname))
+
         token = tcontext.consume_symbol('+')
         if token:
             return self.__term(tcontext, funcname)
+
         token = tcontext.consume_symbol('-')
         if token:
             return NodeFactory.create_ope_node(NodeTypes.SUB, NodeFactory.create_num_node(0), self.__term(tcontext, funcname))
+
         return self.__term(tcontext, funcname)
 
     def __term(self, tcontext, funcname):
@@ -200,7 +206,7 @@ class Parser:
 
         token = tcontext.consume_ident()
         if token:
-            name = token.name
+            name = token.text
             if tcontext.consume_symbol('('):
                 args = []
                 while not tcontext.consume_symbol(')'):
