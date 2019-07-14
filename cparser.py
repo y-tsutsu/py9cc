@@ -19,7 +19,7 @@ class Parser:
     add        = mul ("+" mul | "-" mul)*
     mul        = unary ("*" unary | "/" unary)*
     unary      = ("*" | "&") unary | ("+" | "-")? term
-    term       = "(" expr ")" | ident ("(" expr* ")")? | num
+    term       = "(" expr ")" | "int" ident | ident ("(" expr* ")")? | num
     '''
 
     def __init__(self, token_context):
@@ -50,15 +50,13 @@ class Parser:
         while not tcontext.consume_symbol(')'):
             tcontext.expect_type()
             arg_token = tcontext.expect_ident()
-            offset = self.__get_offset_from_varname(arg_token.text, funcname)
+            offset = self.__regist_varname(arg_token.text, funcname)
             arg_offsets.append(offset)
             if not tcontext.consume_symbol(','):
                 tcontext.expect_symbol(')')
                 break
-
         if tcontext.current.text != '{':
             error('関数の"{"がありません')
-
         return NodeFactory.create_func_node(funcname, arg_offsets, self.__stmt(tcontext, funcname))
 
     def __stmt(self, tcontext, funcname):
@@ -198,12 +196,19 @@ class Parser:
 
     def __term(self, tcontext, funcname):
         '''
-        term = "(" expr ")"| ident ("(" expr* ")")? | num
+        term = "(" expr ")" | "int" ident | ident ("(" expr* ")")? | num
         '''
         token = tcontext.consume_symbol('(')
         if token:
             node = self.__expr(tcontext, funcname)
             tcontext.expect_symbol(')')
+            return node
+
+        token = tcontext.consume_type()
+        if token:
+            name = tcontext.expect_ident().text
+            offset = self.__regist_varname(name, funcname)
+            node = NodeFactory.create_ident_node(offset)
             return node
 
         token = tcontext.consume_ident()
@@ -225,10 +230,17 @@ class Parser:
         token_num = tcontext.expect_num()
         return NodeFactory.create_num_node(token_num.value)
 
+    def __regist_varname(self, varname, funcname):
+        name = f'{funcname}::{varname}'
+        if name in self.__varnames:
+            error(f'既に変数が宣言されています {name}')
+        self.__varnames.append(name)
+        return self.__get_offset_from_varname(varname, funcname)
+
     def __get_offset_from_varname(self, varname, funcname):
         name = f'{funcname}::{varname}'
         if name not in self.__varnames:
-            self.__varnames.append(name)
+            error(f'未宣言の変数が使われています {name}')
         func_varnames = [x for x in self.__varnames if x.startswith(f'{funcname}:')]
         offset = (func_varnames.index(name) + 1) * 8
         return offset

@@ -192,13 +192,13 @@ class CallGenerator(NodeGenerator):
             output.append(f'  pop {reg}')
 
         output.append(f'  push  r15')
-        output.append(f'  xor   r15,r15')
-        output.append(f'  test  rsp,0xf')
+        output.append(f'  xor   r15, r15')
+        output.append(f'  test  rsp, 0xf')
         output.append(f'  setnz r15b')
-        output.append(f'  shl   r15,3')
+        output.append(f'  shl   r15, 3')
         output.append(f'  sub   rsp, r15')
         output.append(f'  call  {node.name}')
-        output.append(f'  add   rsp,r15')
+        output.append(f'  add   rsp, r15')
         output.append(f'  pop   r15')
         output.append(f'  push  rax')
 
