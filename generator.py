@@ -19,16 +19,17 @@ class NodeGenerator(metaclass=ABCMeta):
         output.append(f'  sub rax, {node.offset}')
         output.append(f'  push rax')
 
-    @staticmethod
-    def append_missing_pop(output):
-        push_count = len([x for x in output if x.lstrip().startswith('push')])
-        pop_count = len([x for x in output if x.lstrip().startswith('pop')])
-        if (push_count - pop_count) == 2:
+    def _append_missing_pop(self, output):
+        push_count = len([x for x in output if x.lstrip().startswith('push') and not x.rstrip().endswith('rbp')])
+        pop_count = len([x for x in output if x.lstrip().startswith('pop') and not x.rstrip().endswith('rbp')])
+        if (push_count - pop_count) == 0:
+            pass
+        elif (push_count - pop_count) == 1:
             output.append('  pop rax')
-        elif (push_count - pop_count) > 3:
+        elif (push_count - pop_count) > 1:
             error(f'pushが多すぎます push: {push_count} pop: {pop_count}')
         else:
-            pass
+            error(f'popが多すぎます push: {push_count} pop: {pop_count}')
 
 
 class NumGenerator(NodeGenerator):
@@ -124,7 +125,7 @@ class IfGenerator(NodeGenerator):
         output.append(f'  cmp rax, 0')
         output.append(f'  je  .Lend{id(node)}')
         node.stmt.generate(output)
-        NodeGenerator.append_missing_pop(output)
+        self._append_missing_pop(output)
         output.append(f'.Lend{id(node)}:')
 
 
@@ -135,11 +136,11 @@ class IfElseGenerator(NodeGenerator):
         output.append(f'  cmp rax, 0')
         output.append(f'  je  .Lelse{id(node)}')
         node.stmt.generate(output)
-        NodeGenerator.append_missing_pop(output)
+        self._append_missing_pop(output)
         output.append(f'  jmp .Lend{id(node)}')
         output.append(f'.Lelse{id(node)}:')
         node.else_stmt.generate(output)
-        NodeGenerator.append_missing_pop(output)
+        self._append_missing_pop(output)
         output.append(f'.Lend{id(node)}:')
 
 
@@ -151,7 +152,7 @@ class WhileGenerator(NodeGenerator):
         output.append(f'  cmp rax, 0')
         output.append(f'  je  .Lend{id(node)}')
         node.stmt.generate(output)
-        NodeGenerator.append_missing_pop(output)
+        self._append_missing_pop(output)
         output.append(f'  jmp .Lbegin{id(node)}')
         output.append(f'.Lend{id(node)}:')
 
@@ -160,17 +161,17 @@ class ForGenerator(NodeGenerator):
     def generate(self, node, output):
         if node.expr1:
             node.expr1.generate(output)
-            NodeGenerator.append_missing_pop(output)
+            self._append_missing_pop(output)
         output.append(f'.Lbegin{id(node)}:')
         node.expr2.generate(output)
         output.append(f'  pop rax')
         output.append(f'  cmp rax, 0')
         output.append(f'  je  .Lend{id(node)}')
         node.stmt.generate(output)
-        NodeGenerator.append_missing_pop(output)
+        self._append_missing_pop(output)
         if node.expr3:
             node.expr3.generate(output)
-            NodeGenerator.append_missing_pop(output)
+            self._append_missing_pop(output)
         output.append(f'  jmp .Lbegin{id(node)}')
         output.append(f'.Lend{id(node)}:')
 
@@ -179,7 +180,7 @@ class BlockGenerator(NodeGenerator):
     def generate(self, node, output):
         for stmt in node.stmts:
             stmt.generate(output)
-            NodeGenerator.append_missing_pop(output)
+            self._append_missing_pop(output)
 
 
 class CallGenerator(NodeGenerator):
@@ -260,6 +261,5 @@ class Generator:
         for node in ncontext.nodes:
             output = []
             node.generate(output)
-            NodeGenerator.append_missing_pop(output)
             result += output
         return result
