@@ -16,7 +16,7 @@ class NodeGenerator(metaclass=ABCMeta):
         if node.type != NodeTypes.IDENT:
             error('代入の左辺値が変数ではありません')
         output.append(f'  mov rax, rbp')
-        output.append(f'  sub rax, {node.offset}')
+        output.append(f'  sub rax, {node.order * 8}')
         output.append(f'  push rax')
 
     def _append_missing_pop(self, output):
@@ -206,7 +206,7 @@ class CallGenerator(NodeGenerator):
 
 class FuncGenerator(NodeGenerator):
     def generate(self, node, output):
-        if len(NodeGenerator.REG_ARGS) < len(node.arg_offsets):
+        if len(NodeGenerator.REG_ARGS) < len(node.arg_orders):
             error(f'引数が多すぎます {node.args}')
 
         output.append(f'{node.name}:')
@@ -215,9 +215,9 @@ class FuncGenerator(NodeGenerator):
         output.append(f'  mov rbp, rsp')
         output.append(f'  sub rsp, {node.varsize}')
 
-        for offset, reg in zip(node.arg_offsets, CallGenerator.REG_ARGS):
+        for order, reg in zip(node.arg_orders, CallGenerator.REG_ARGS):
             output.append(f'  mov rax, rbp')
-            output.append(f'  sub rax, {offset}')
+            output.append(f'  sub rax, {order * 8}')
             output.append(f'  mov [rax], {reg}')
 
         node.block.generate(output)

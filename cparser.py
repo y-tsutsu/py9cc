@@ -46,18 +46,18 @@ class Parser:
         tcontext.expect_type()
         funcname = tcontext.expect_ident().text
         tcontext.expect_symbol('(')
-        arg_offsets = []
+        arg_orders = []
         while not tcontext.consume_symbol(')'):
             tcontext.expect_type()
             arg_token = tcontext.expect_ident()
-            offset = self.__regist_varname(arg_token.text, funcname)
-            arg_offsets.append(offset)
+            order = self.__regist_varname(arg_token.text, funcname)
+            arg_orders.append(order)
             if not tcontext.consume_symbol(','):
                 tcontext.expect_symbol(')')
                 break
         if tcontext.current.text != '{':
             error('関数の"{"がありません')
-        return NodeFactory.create_func_node(funcname, arg_offsets, self.__stmt(tcontext, funcname))
+        return NodeFactory.create_func_node(funcname, arg_orders, self.__stmt(tcontext, funcname))
 
     def __stmt(self, tcontext, funcname):
         '''
@@ -207,8 +207,8 @@ class Parser:
         token = tcontext.consume_type()
         if token:
             name = tcontext.expect_ident().text
-            offset = self.__regist_varname(name, funcname)
-            node = NodeFactory.create_ident_node(offset)
+            order = self.__regist_varname(name, funcname)
+            node = NodeFactory.create_ident_node(order)
             return node
 
         token = tcontext.consume_ident()
@@ -223,8 +223,8 @@ class Parser:
                         break
                 node = NodeFactory.create_call_node(name, args)
             else:
-                offset = self.__get_offset_from_varname(name, funcname)
-                node = NodeFactory.create_ident_node(offset)
+                order = self.__get_order_from_varname(name, funcname)
+                node = NodeFactory.create_ident_node(order)
             return node
 
         token_num = tcontext.expect_num()
@@ -235,12 +235,12 @@ class Parser:
         if name in self.__varnames:
             error(f'既に変数が宣言されています {name}')
         self.__varnames.append(name)
-        return self.__get_offset_from_varname(varname, funcname)
+        return self.__get_order_from_varname(varname, funcname)
 
-    def __get_offset_from_varname(self, varname, funcname):
+    def __get_order_from_varname(self, varname, funcname):
         name = f'{funcname}::{varname}'
         if name not in self.__varnames:
             error(f'未宣言の変数が使われています {name}')
         func_varnames = [x for x in self.__varnames if x.startswith(f'{funcname}:')]
-        offset = (func_varnames.index(name) + 1) * 8
-        return offset
+        order = func_varnames.index(name) + 1
+        return order
