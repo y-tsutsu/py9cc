@@ -68,9 +68,10 @@ class NodeFactory:
         return node
 
     @staticmethod
-    def create_ident_node(order):
+    def create_ident_node(order, typeinfo):
         node = Node(NodeTypes.IDENT, IdentGenerator())
         node.order = order
+        node.typeinfo = typeinfo
         return node
 
     @staticmethod
@@ -128,10 +129,10 @@ class NodeFactory:
         return NodeFactory.create_num_node(1)
 
     @staticmethod
-    def create_func_node(name, arg_orders, block):
+    def create_func_node(name, args_order_type, block):
         node = Node(NodeTypes.FUNC, FuncGenerator())
         node.name = name
-        node.arg_orders = arg_orders
+        node.args_order_type = args_order_type
         node.block = block
         return node
 

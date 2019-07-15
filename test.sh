@@ -1,4 +1,5 @@
 #!/bin/bash
+
 try() {
     expected="$1"
     input="$2"
@@ -86,9 +87,12 @@ try 255 "int main() { int x; x = 50000000; while (x > 0) { x = x - 1; if (x == 2
 try 21 "int my_add(int v1, int v2, int v3, int v4, int v5, int v6) { int ans; ans = v1 + v2 + v3 + v4 + v5 + v6; return ans; } int main() { int x1; int x2; int x3; int x4; int x5; int x6; x1 = 1; x2 = 2; x3 = 3; x4 = 4; x5 = 5; x6 = 6; int ans; ans = my_add(x1, x2, x3, x4, x5, x6); return ans; }"
 try 4 "int my_div(int v1, int v2) { int ans; ans = v1 / v2; return ans; } int main() { int v1; v1 = 8; int v2; v2 = 2; int ans; ans = my_div(v1, v2); return ans; }"
 try 0 "int fib_(int max, int left, int right) { if (max < left) { return 0; } MyPrintNum(left); int tmp; tmp = left; left = right; right = tmp + right; fib_(max, left, right); return 0; } int fib(int max) { fib_(max, 0, 1); return 0; } int main() { fib(1000); return 0; }"
-try 3 "int main() { int x; x = 3; int y; y = &x; return *y; }"
-try 3 "int main() { int x; x = 3; int y; y = 5; int z; z = &y + 8; return *z; }"
+try 3 "int main() { int x; x = 3; int *y; y = &x; return *y; }"
+try 3 "int main() { int x; x = 3; int y; y = 5; int *z; z = &y + 8; return *z; }"
 try 100 "int foo(int num) { int i; int j; j = 0; for (i = num; i > 0; i = i - 1) { if (i == 100) { return 253; } if (i = 1) { while (j < 100) { j = j + 2; if (j == 255) { return 252; } } return j; } } return 251; } int main() { int i; int j; j = 0; for (i = 1; i < 100; i = i + 1) { if (i == 0) { return 255; } if (i == 99) { return foo(i); } else { j = j + 1; if (j == 99) { return 254; } } } return 0; }"
+try 42 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; return *(*z); }"
+try 23 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; **z = 23; return x; }"
+try 65 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; *y = 23 + **z; return *(*z); }"
 
 # try 0 "int main() { for (i = 0; ;) { MyPrint(); } return 0; }"
 

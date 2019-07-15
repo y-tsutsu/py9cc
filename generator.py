@@ -14,7 +14,7 @@ class NodeGenerator(metaclass=ABCMeta):
         from node import NodeTypes
 
         if node.type != NodeTypes.IDENT:
-            error('代入の左辺値が変数ではありません')
+            error(f'代入の左辺値が変数ではありません {node.type}')
         output.append(f'  mov rax, rbp')
         output.append(f'  sub rax, {node.order * 8}')
         output.append(f'  push rax')
@@ -92,7 +92,13 @@ class OperatorGenerator(NodeGenerator):
 
 class AssignGenerator(NodeGenerator):
     def generate(self, node, output):
-        self._gen_lval(node.left, output)
+        from node import NodeTypes
+
+        if node.left.type == NodeTypes.DEREF:
+            node.left.unary.generate(output)
+        else:
+            self._gen_lval(node.left, output)
+
         node.right.generate(output)
         output.append('  pop rdi')
         output.append('  pop rax')
@@ -206,7 +212,7 @@ class CallGenerator(NodeGenerator):
 
 class FuncGenerator(NodeGenerator):
     def generate(self, node, output):
-        if len(NodeGenerator.REG_ARGS) < len(node.arg_orders):
+        if len(NodeGenerator.REG_ARGS) < len(node.args_order_type):
             error(f'引数が多すぎます {node.args}')
 
         output.append(f'{node.name}:')
@@ -215,7 +221,8 @@ class FuncGenerator(NodeGenerator):
         output.append(f'  mov rbp, rsp')
         output.append(f'  sub rsp, {node.varsize}')
 
-        for order, reg in zip(node.arg_orders, CallGenerator.REG_ARGS):
+        orders = [order for order, type in node.args_order_type]
+        for order, reg in zip(orders, CallGenerator.REG_ARGS):
             output.append(f'  mov rax, rbp')
             output.append(f'  sub rax, {order * 8}')
             output.append(f'  mov [rax], {reg}')
