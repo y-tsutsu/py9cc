@@ -88,6 +88,7 @@ try 4 "int my_div(int v1, int v2) { int ans; ans = v1 / v2; return ans; } int ma
 try 0 "int fib_(int max, int left, int right) { if (max < left) { return 0; } MyPrintNum(left); int tmp; tmp = left; left = right; right = tmp + right; fib_(max, left, right); return 0; } int fib(int max) { fib_(max, 0, 1); return 0; } int main() { fib(1000); return 0; }"
 try 3 "int main() { int x; x = 3; int y; y = &x; return *y; }"
 try 3 "int main() { int x; x = 3; int y; y = 5; int z; z = &y + 8; return *z; }"
+try 100 "int foo(int num) { int i; int j; j = 0; for (i = num; i > 0; i = i - 1) { if (i == 100) { return 253; } if (i = 1) { while (j < 100) { j = j + 2; if (j == 255) { return 252; } } return j; } } return 251; } int main() { int i; int j; j = 0; for (i = 1; i < 100; i = i + 1) { if (i == 0) { return 255; } if (i == 99) { return foo(i); } else { j = j + 1; if (j == 99) { return 254; } } } return 0; }"
 
 # try 0 "int main() { for (i = 0; ;) { MyPrint(); } return 0; }"
 
