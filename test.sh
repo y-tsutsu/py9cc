@@ -4,8 +4,6 @@ try() {
     expected="$1"
     input="$2"
 
-    gcc -c sample.c
-
     python py9cc.py "$input" > tmp.s
 
     if [ "$?" != "0" ]; then
@@ -31,8 +29,10 @@ try() {
         exit 1
     fi
 
-    rm tmp.s tmp sample.o
+    rm tmp.s tmp
 }
+
+gcc -c sample.c
 
 try 0 "int main() { return 0; }"
 try 42 "int main() { return 42; }"
@@ -95,5 +95,7 @@ try 23 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; **z = 23; r
 try 65 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; *y = 23 + **z; return *(*z); }"
 
 # try 0 "int main() { for (i = 0; ;) { MyPrint(); } return 0; }"
+
+rm sample.o
 
 echo "OK"
