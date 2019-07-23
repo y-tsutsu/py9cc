@@ -93,6 +93,7 @@ try 100 "int foo(int num) { int i; int j; j = 0; for (i = num; i > 0; i = i - 1)
 try 42 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; return *(*z); }"
 try 23 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; **z = 23; return x; }"
 try 65 "int main() { int x; x = 42; int *y; y = &x; int **z; z = &y; *y = 23 + **z; return *(*z); }"
+try 5 "int main() { int a; a = MyDiv(10, 1 + 1); return a; }"
 
 # try 0 "int main() { for (i = 0; ;) { MyPrint(); } return 0; }"
 

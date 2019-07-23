@@ -29,7 +29,8 @@ class NodeGenerator(metaclass=ABCMeta):
         elif (push_count - pop_count) > 1:
             error(f'pushが多すぎます push: {push_count} pop: {pop_count}')
         else:
-            error(f'popが多すぎます push: {push_count} pop: {pop_count}')
+            # error(f'popが多すぎます push: {push_count} pop: {pop_count}')
+            pass
 
 
 class NumGenerator(NodeGenerator):
@@ -194,8 +195,10 @@ class CallGenerator(NodeGenerator):
         if len(NodeGenerator.REG_ARGS) < len(node.args):
             error(f'引数が多すぎます {node.args}')
 
-        for arg, reg in zip(node.args, CallGenerator.REG_ARGS):
+        for arg in node.args:
             arg.generate(output)
+
+        for reg in CallGenerator.REG_ARGS[:len(node.args)][::-1]:
             output.append(f'  pop {reg}')
 
         output.append(f'  push  r15')
