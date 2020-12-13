@@ -15,9 +15,9 @@ class NodeGenerator(metaclass=ABCMeta):
 
         if node.type != NodeTypes.IDENT:
             error(f'代入の左辺値が変数ではありません {node.type}')
-        output.append(f'  mov rax, rbp')
+        output.append('  mov rax, rbp')
         output.append(f'  sub rax, {node.order * 8}')
-        output.append(f'  push rax')
+        output.append('  push rax')
 
     def _append_missing_pop(self, output):
         push_count = len([x for x in output if x.lstrip().startswith('push') and not x.rstrip().endswith('rbp')])
@@ -128,8 +128,8 @@ class ReturnGenerator(NodeGenerator):
 class IfGenerator(NodeGenerator):
     def generate(self, node, output):
         node.expr.generate(output)
-        output.append(f'  pop rax')
-        output.append(f'  cmp rax, 0')
+        output.append('  pop rax')
+        output.append('  cmp rax, 0')
         output.append(f'  je  .Lend{id(node)}')
         node.stmt.generate(output)
         self._append_missing_pop(output)
@@ -139,8 +139,8 @@ class IfGenerator(NodeGenerator):
 class IfElseGenerator(NodeGenerator):
     def generate(self, node, output):
         node.expr.generate(output)
-        output.append(f'  pop rax')
-        output.append(f'  cmp rax, 0')
+        output.append('  pop rax')
+        output.append('  cmp rax, 0')
         output.append(f'  je  .Lelse{id(node)}')
         node.stmt.generate(output)
         self._append_missing_pop(output)
@@ -155,8 +155,8 @@ class WhileGenerator(NodeGenerator):
     def generate(self, node, output):
         output.append(f'.Lbegin{id(node)}:')
         node.expr.generate(output)
-        output.append(f'  pop rax')
-        output.append(f'  cmp rax, 0')
+        output.append('  pop rax')
+        output.append('  cmp rax, 0')
         output.append(f'  je  .Lend{id(node)}')
         node.stmt.generate(output)
         self._append_missing_pop(output)
@@ -171,8 +171,8 @@ class ForGenerator(NodeGenerator):
             self._append_missing_pop(output)
         output.append(f'.Lbegin{id(node)}:')
         node.expr2.generate(output)
-        output.append(f'  pop rax')
-        output.append(f'  cmp rax, 0')
+        output.append('  pop rax')
+        output.append('  cmp rax, 0')
         output.append(f'  je  .Lend{id(node)}')
         node.stmt.generate(output)
         self._append_missing_pop(output)
@@ -201,16 +201,16 @@ class CallGenerator(NodeGenerator):
         for reg in CallGenerator.REG_ARGS[:len(node.args)][::-1]:
             output.append(f'  pop {reg}')
 
-        output.append(f'  push  r15')
-        output.append(f'  xor   r15, r15')
-        output.append(f'  test  rsp, 0xf')
-        output.append(f'  setnz r15b')
-        output.append(f'  shl   r15, 3')
-        output.append(f'  sub   rsp, r15')
+        output.append('  push  r15')
+        output.append('  xor   r15, r15')
+        output.append('  test  rsp, 0xf')
+        output.append('  setnz r15b')
+        output.append('  shl   r15, 3')
+        output.append('  sub   rsp, r15')
         output.append(f'  call  {node.name}')
-        output.append(f'  add   rsp, r15')
-        output.append(f'  pop   r15')
-        output.append(f'  push  rax')
+        output.append('  add   rsp, r15')
+        output.append('  pop   r15')
+        output.append('  push  rax')
 
 
 class FuncGenerator(NodeGenerator):
@@ -220,22 +220,22 @@ class FuncGenerator(NodeGenerator):
 
         output.append(f'{node.name}:')
 
-        output.append(f'  push rbp')
-        output.append(f'  mov rbp, rsp')
+        output.append('  push rbp')
+        output.append('  mov rbp, rsp')
         output.append(f'  sub rsp, {node.varsize}')
 
         orders = [order for order, type in node.args_order_type]
         for order, reg in zip(orders, CallGenerator.REG_ARGS):
-            output.append(f'  mov rax, rbp')
+            output.append('  mov rax, rbp')
             output.append(f'  sub rax, {order * 8}')
             output.append(f'  mov [rax], {reg}')
 
         node.block.generate(output)
 
         if not output[-1].lstrip().startswith('ret'):
-            output.append(f'  mov rsp, rbp')
-            output.append(f'  pop rbp')
-            output.append(f'  ret')
+            output.append('  mov rsp, rbp')
+            output.append('  pop rbp')
+            output.append('  ret')
 
 
 class AddressGenerator(NodeGenerator):

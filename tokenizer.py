@@ -113,7 +113,7 @@ class TokenContext:
             if self.__tokens:
                 error_at(self.__c_code, self.__tokens[0].code, '型ではありません')
             else:
-                error(f'型ではありません')
+                error('型ではありません')
         return token
 
 
