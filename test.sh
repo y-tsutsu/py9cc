@@ -37,7 +37,7 @@ gcc -c sample.c
 try 0 "int main() { return 0; }"
 try 42 "int main() { return 42; }"
 try 21 "int main() { return 5+20-4; }"
-try 41 "int main() { return  12 + 34 - 5 ; }"
+try 41 "int main() { return 12 + 34 - 5 ; }"
 try 47 "int main() { return 5+6*7; }"
 try 15 "int main() { return 5*(9-6); }"
 try 4 "int main() { return (3+5)/2; }"
