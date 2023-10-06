@@ -11,7 +11,7 @@ try() {
         exit 1
     fi
 
-    gcc -o tmp tmp.s sample.o
+    gcc -z noexecstack -o tmp tmp.s sample.o
 
     if [ "$?" != "0" ]; then
         echo "gcc compile error"
