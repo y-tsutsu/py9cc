@@ -7,7 +7,7 @@ class NodeGenerator(metaclass=ABCMeta):
     REG_ARGS = ['rdi', 'rsi', 'rdx', 'rcx', 'r8', 'r9']
 
     @abstractmethod
-    def generate(self, node):
+    def generate(self, node, output):
         pass
 
     def _gen_lval(self, node, output):
